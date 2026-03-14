@@ -31,7 +31,7 @@
     <modules>
         <module>script</module>
         <module>dao</module>
-
+        <module>ui</module>
     </modules>
     <properties>
         <java.version>17</java.version>
