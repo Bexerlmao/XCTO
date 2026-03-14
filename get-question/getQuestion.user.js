@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         获取学习通代码
+// @name         XCTO 题目获取
 // @namespace    Bexerlmao
 // @version      0.1.0
 // @description  获取题目、调试界面、自动翻页功能
