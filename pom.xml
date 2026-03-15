@@ -30,8 +30,10 @@
     </scm>
     <modules>
         <module>script</module>
-        <module>dao</module>
-        <module>ui</module>
+        <module>application</module>
+        <module>common</module>
+        <module>modules</module>
+        <!--        <module>ui</module>-->
     </modules>
     <properties>
         <java.version>17</java.version>
@@ -50,12 +52,6 @@
     </dependencies>
 
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
     </build>
 
 </project>
