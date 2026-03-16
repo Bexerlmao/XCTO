@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网页</title>
+    <style>
+        /* 全局样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+
+        body {
+            padding: 50px;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        /* 答题卡片容器 */
+        .quiz-card {
+            width: 500px;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        /* 题目区域 */
+        .question-container {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .question-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .question-content {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* 选项容器 */
+        .options-container {
+            margin-bottom: 30px;
+        }
+
+        /* 单个选项样式 */
+        .option-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+
+        /* 隐藏原生单选按钮 */
+        .option-input {
+            display: none;
+        }
+
+        /* 自定义圆点样式 */
+        .custom-radio {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        /* 字母样式 */
+        .radio-letter {
+            font-size: 16px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        /* 选项文本 */
+        .option-text {
+            font-size: 16px;
+            color: #333;
+        }
+
+        /* 选中状态样式 */
+        .option-input:checked + .custom-radio {
+            background-color: #409eff;
+            border-color: #409eff;
+        }
+
+        .option-input:checked + .custom-radio .radio-letter {
+            color: white;
+        }
+
+        /* 最后一个选项去掉下边距 */
+        .option-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 下一题按钮样式 */
+        .next-btn {
+            width: 100%;
+            height: 44px;
+            background-color: #409eff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .next-btn:hover {
+            background-color: #3388ee;
+        }
+
+        .next-btn:disabled {
+            background-color: #b3d4fc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-card">
+        <!-- 题目区域 -->
+        <div class="question-container">
+            <div class="question-title">问题</div>
+            <div class="question-content"></div>
+        </div>
+
+        <!-- 选项区域 -->
+        <div class="options-container">
+            <div class="option-item">
+                <input type="radio" name="option" id="optionA" class="option-input">
+                <label for="optionA" class="custom-radio">
+                    <span class="radio-letter">A</span>
+                </label>
+                <span class="option-text">选项1</span>
+            </div>
+            <div class="option-item">
+                <input type="radio" name="option" id="optionB" class="option-input">
+                <label for="optionB" class="custom-radio">
+                    <span class="radio-letter">B</span>
+                </label>
+                <span class="option-text">选项2</span>
+            </div>
+            <div class="option-item">
+                <input type="radio" name="option" id="optionC" class="option-input">
+                <label for="optionC" class="custom-radio">
+                    <span class="radio-letter">C</span>
+                </label>
+                <span class="option-text">选项3</span>
+            </div>
+            <div class="option-item">
+                <input type="radio" name="option" id="optionD" class="option-input">
+                <label for="optionD" class="custom-radio">
+                    <span class="radio-letter">D</span>
+                </label>
+                <span class="option-text">选项4</span>
+            </div>
+        </div>
+
+        <!-- 下一题按钮 -->
+        <button class="next-btn" id="nextBtn">下一题</button>
+    </div>
+
+    <script>
+        // 获取元素
+        const radioInputs = document.querySelectorAll('.option-input');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        // 初始禁用按钮（可选，要求必须选择选项才能点击下一题）
+        nextBtn.disabled = true;
+
+        // 监听选项选择事件
+        radioInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                // 选中选项后启用按钮
+                nextBtn.disabled = false;
+            });
+        });
+
+        // 监听下一题按钮点击事件
+        nextBtn.addEventListener('click', function() {
+            // 这里可以添加切换题目的逻辑
+            // 示例：弹出提示，实际项目中可替换为加载新题目
+            alert('已选择答案，即将进入下一题！');
+            
+            // 重置选项和按钮状态（模拟切换题目）
+            radioInputs.forEach(input => {
+                input.checked = false;
+            });
+            nextBtn.disabled = true;
+            
+            // 实际项目中可通过AJAX加载新题目，或切换隐藏的题目面板
+        });
+    </script>
+</body>
+</html>
