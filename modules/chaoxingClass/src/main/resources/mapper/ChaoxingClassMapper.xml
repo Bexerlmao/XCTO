@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.bexerlmao.xcto.chaoxingClass.mapper.ChaoxingClassMapper">
+    <insert id="insertClass" parameterType="Long">
+        INSERT INTO chaoxingclass(class_id, question_total)
+        values (#{classId}, 0)
+    </insert>
+
+    <select id="getClassQuestionTotalById" parameterType="Long" resultType="Long">
+        SELECT question_total FROM chaoxingclass WHERE id = #{id}
+    </select>
+    
+    <select id="getClassQuestionTotalByClassId" parameterType="Long" resultType="Long">
+        SELECT question_total FROM chaoxingclass WHERE class_id = #{classId}
+    </select>
+    
+    <update id="updateClassTotalByClassId" parameterType="map">
+        UPDATE chaoxingclass SET question_total = #{total} WHERE class_id = #{classId}
+    </update>
+</mapper>
