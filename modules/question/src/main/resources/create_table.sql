@@ -2,6 +2,7 @@
 CREATE TABLE IF NOT EXISTS question (
     id SERIAL PRIMARY KEY,
     class_id BIGINT,
+    question_type VARCHAR(50),
     question TEXT,
     options JSONB,
     answer INTEGER,

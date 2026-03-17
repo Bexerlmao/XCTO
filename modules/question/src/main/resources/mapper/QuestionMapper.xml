@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="cc.bexerlmao.question.mapper.QuestionMapper">
+<mapper namespace="cc.bexerlmao.xcto.question.mapper.QuestionMapper">
     
     <!-- 插入题目 -->
-    <insert id="insertQuestion" parameterType="cc.bexerlmao.question.entity.Question">
+    <insert id="insertQuestion" parameterType="cc.bexerlmao.xcto.question.entity.Question">
         INSERT INTO question (
             class_id,
+            question_type,
             question,
             options,
             answer,
@@ -13,6 +14,7 @@
             update_time
         ) VALUES (
             #{classId},
+            #{questionType},
             #{question},
             CAST(#{options, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler} AS jsonb),
             #{answer},
@@ -25,6 +27,7 @@
     <insert id="batchInsertQuestion" parameterType="java.util.List">
         INSERT INTO question (
             class_id,
+            question_type,
             question,
             options,
             answer,
@@ -34,6 +37,7 @@
         <foreach collection="list" item="item" separator=",">
             (
                 #{item.classId},
+                #{item.questionType},
                 #{item.question},
                 CAST(#{item.options, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler} AS jsonb),
                 #{item.answer},
@@ -44,24 +48,25 @@
     </insert>
     
     <!-- 查询题目 -->
-    <select id="selectQuestionById" parameterType="Long" resultType="cc.bexerlmao.question.entity.Question">
+    <select id="selectQuestionById" parameterType="Long" resultType="cc.bexerlmao.xcto.question.entity.Question">
         SELECT * FROM question WHERE id = #{id}
     </select>
     
     <!-- 查询所有题目 -->
-    <select id="selectAllQuestions" resultType="cc.bexerlmao.question.entity.Question">
+    <select id="selectAllQuestions" resultType="cc.bexerlmao.xcto.question.entity.Question">
         SELECT * FROM question ORDER BY create_time DESC
     </select>
     
     <!-- 根据班级ID查询题目 -->
-    <select id="selectQuestionsByClassId" parameterType="Long" resultType="cc.bexerlmao.question.entity.Question">
+    <select id="selectQuestionsByClassId" parameterType="Long" resultType="cc.bexerlmao.xcto.question.entity.Question">
         SELECT * FROM question WHERE class_id = #{classId} ORDER BY create_time DESC
     </select>
     
     <!-- 更新题目 -->
-    <update id="updateQuestion" parameterType="cc.bexerlmao.question.entity.Question">
+    <update id="updateQuestion" parameterType="cc.bexerlmao.xcto.question.entity.Question">
         UPDATE question SET
             class_id = #{classId},
+            question_type = #{questionType},
             question = #{question},
             options = CAST(#{options, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler} AS jsonb),
             answer = #{answer},

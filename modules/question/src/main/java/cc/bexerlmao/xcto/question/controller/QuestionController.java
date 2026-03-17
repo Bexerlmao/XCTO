@@ -1,14 +1,15 @@
-package cc.bexerlmao.question.controller;
+package cc.bexerlmao.xcto.question.controller;
 
-import cc.bexerlmao.question.entity.Question;
-import cc.bexerlmao.question.service.GetQuestionService;
+import cc.bexerlmao.xcto.question.entity.Question;
+import cc.bexerlmao.xcto.question.entity.QuestionBatchRequest;
+import cc.bexerlmao.xcto.question.service.GetQuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/question")
+@RequestMapping("/question")
 public class QuestionController {
     
     @Autowired
@@ -37,7 +38,24 @@ public class QuestionController {
             return "error: " + e.getMessage();
         }
     }
-    
+
+    // 批量保存题目（新结构）
+    @PostMapping("/saveBatchNew")
+    public String saveQuestionsNew(@RequestBody QuestionBatchRequest request) {
+        try {
+            questionService.saveQuestionsNew(request);
+            return "success";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error: " + e.getMessage();
+        }
+    }
+
+    @GetMapping("/get/{classId}")
+    public Question getQuestion(@PathVariable Long classId){
+        return questionService.getRandomQuestion(classId);
+    }
+
     // 根据ID获取题目
     @GetMapping("/get/{id}")
     public Question getQuestionById(@PathVariable Long id) {
@@ -67,8 +85,9 @@ public class QuestionController {
             return "error: " + e.getMessage();
         }
     }
-    
-    // 删除题目
+
+    //TODO:添加用户管理相关内容
+/*    // 删除题目
     @DeleteMapping("/delete/{id}")
     public String deleteQuestion(@PathVariable Long id) {
         try {
@@ -78,5 +97,5 @@ public class QuestionController {
             e.printStackTrace();
             return "error: " + e.getMessage();
         }
-    }
+    }*/
 }
