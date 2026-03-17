@@ -35,3 +35,45 @@ build/
 
 ### VS Code ###
 .vscode/
+
+###vue###
+# Logs
+xcto-ui/logs
+xcto-ui/*.log
+xcto-ui/npm-debug.log*
+xcto-ui/yarn-debug.log*
+xcto-ui/yarn-error.log*
+xcto-ui/pnpm-debug.log*
+xcto-ui/lerna-debug.log*
+
+xcto-ui/node_modules
+xcto-ui/.DS_Store
+xcto-ui/dist
+xcto-ui/dist-ssr
+xcto-ui/coverage
+xcto-ui/*.local
+
+# Editor directories and files
+xcto-ui/.vscode/*
+xcto-ui/!.vscode/extensions.json
+xcto-ui/.idea
+xcto-ui/*.suo
+xcto-ui/*.ntvs*
+xcto-ui/*.njsproj
+xcto-ui/*.sln
+xcto-ui/*.sw?
+
+xcto-ui/*.tsbuildinfo
+
+xcto-ui/.eslintcache
+
+# Cypress
+xcto-ui/cypress/videos/
+xcto-ui/cypress/screenshots/
+
+# Vitest
+xcto-ui/__screenshots__/
+
+# Vite
+xcto-ui/*.timestamp-*-*.mjs
+
