@@ -1,4 +1,4 @@
-package cc.bexerlmao.application;
+package cc.bexerlmao.xcto.application;
 
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
