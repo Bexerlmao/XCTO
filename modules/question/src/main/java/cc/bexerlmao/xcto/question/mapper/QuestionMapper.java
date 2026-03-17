@@ -1,9 +1,8 @@
-package cc.bexerlmao.question.mapper;
+package cc.bexerlmao.xcto.question.mapper;
 
-import cc.bexerlmao.question.entity.Question;
+import cc.bexerlmao.xcto.question.entity.Question;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 
 import java.util.List;
 
