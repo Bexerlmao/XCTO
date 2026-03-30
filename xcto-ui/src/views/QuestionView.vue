@@ -10,13 +10,27 @@ interface QuestionOption {
 
 interface Question {
   id: string;
-  type: '单选题' | '多选题' | '判断题' | '填空题';
+  type: '0' | '1' | '2' | '3';
   content: string;
   options: QuestionOption[];
 }
 
+// 题目类型映射
+const questionTypeMap: Record<string, string> = {
+  '0': '单选题',
+  '1': '多选题',
+  '2': '填空题',
+  '3': '判断题'
+};
+
+// 获取题目类型显示文本
+const getQuestionTypeText = (type: string | undefined): string => {
+  if (!type) return '';
+  return questionTypeMap[type] || type;
+};
+
 // 响应式状态
-const questionType = ref<'单选题' | '多选题' | '判断题' | '填空题'>('单选题');
+const questionType = ref<string>('单选题');
 const questionContent = ref('');
 const options = ref<QuestionOption[]>([]);
 const isNextBtnDisabled = ref(true);
@@ -26,7 +40,7 @@ const fillBlankAnswers = ref<string[]>([]);
 const isLoading = ref(false);
 
 // 异步获取题目函数（预留接口）
-const fetchQuestion = async (type?: '单选题' | '多选题' | '判断题' | '填空题') => {
+const fetchQuestion = async (type?: string) => {
   try {
     isLoading.value = true;
     
@@ -39,29 +53,44 @@ const fetchQuestion = async (type?: '单选题' | '多选题' | '判断题' | '�
 
     //TODO: 删除debug
 
-    type = '填空题'
+    type = '2' // 填空题
 
-    if (type === '判断题') {
+    // 确保类型是数字字符串
+    const normalizedType = type || '0'; // 默认单选题
+
+    if (normalizedType === '3') { // 判断题
       mockData = {
         id: '1',
-        type: '判断题',
+        type: '3',
         content: '这是一道测试判断题，请判断对错。',
         options: [
           { value: 'true', text: '正确' },
           { value: 'false', text: '错误' }
         ]
       };
-    } else if (type === '填空题') {
+    } else if (normalizedType === '2') { // 填空题
       mockData = {
         id: '1',
-        type: '填空题',
+        type: '2',
         content: '请填写以下空白处：Vue 3 的核心特性包括 Composition API、______ 和 ______。',
         options: []
       };
-    } else {
+    } else if (normalizedType === '1') { // 多选题
       mockData = {
         id: '1',
-        type: type || '多选题',
+        type: '1',
+        content: '这是一道测试题目，请选择正确的答案。',
+        options: [
+          { value: 'A', text: '选项1' },
+          { value: 'B', text: '选项2' },
+          { value: 'C', text: '选项3' },
+          { value: 'D', text: '选项4' }
+        ]
+      };
+    } else { // 单选题
+      mockData = {
+        id: '1',
+        type: '0',
         content: '这是一道测试题目，请选择正确的答案。',
         options: [
           { value: 'A', text: '选项1' },
@@ -105,13 +134,13 @@ const handleCheckboxChange = (value: (string | number | boolean)[]) => {
 };
 
 // 处理填空题输入
-const handleFillBlankChange = (index: number, value: string) => {
+const handleFillBlankChange = (index: number, value: string | undefined) => {
   // 确保数组长度足够
   while (fillBlankAnswers.value.length <= index) {
     fillBlankAnswers.value.push('');
   }
   // 更新对应索引的答案
-  fillBlankAnswers.value[index] = value;
+  fillBlankAnswers.value[index] = value || '';
   // 检查是否所有空白处都已填写
   const allFilled = fillBlankAnswers.value.every(answer => answer.trim().length > 0);
   isNextBtnDisabled.value = !allFilled;
@@ -138,7 +167,7 @@ const handleNextClick = async () => {
 // 生命周期钩子
 onMounted(async () => {
   // 组件挂载后加载第一道题目（测试填空题）
-  await fetchQuestion('填空题');
+  await fetchQuestion('2');
 });
 </script>
 
@@ -153,12 +182,12 @@ onMounted(async () => {
     <template v-else>
       <!-- 题目区域 -->
       <div class="question-container">
-        <div class="question-title">{{ questionType }}</div>
-        <div v-if="questionType != '填空题'" class="question-content">{{ questionContent }}</div>
+        <div class="question-title">{{ getQuestionTypeText(questionType) }}</div>
+        <div v-if="questionType != '2'" class="question-content">{{ questionContent }}</div>
       </div>
 
       <!-- 单选题选项区域 -->
-      <div v-if="questionType == '单选题'" class="options-container">
+      <div v-if="questionType == '0'" class="options-container">
         <div class="option-item" v-for="option in options" :key="option.value">
           <input 
             type="radio" 
@@ -176,7 +205,7 @@ onMounted(async () => {
       </div>
 
       <!-- 判断题选项区域 -->
-      <div v-if="questionType == '判断题'" class="options-container">
+      <div v-if="questionType == '3'" class="options-container">
         <div class="option-item" v-for="option in options" :key="option.value">
           <input 
             type="radio" 
@@ -194,7 +223,7 @@ onMounted(async () => {
       </div>
 
       <!-- 填空题选项区域 -->
-      <div v-if="questionType == '填空题'" class="options-container">
+      <div v-if="questionType == '2'" class="options-container">
         <div class="fill-blank-content">
           <template v-for="(part, index) in processFillBlankContent(questionContent)" :key="index">
             <span v-if="index < processFillBlankContent(questionContent).length - 1">
@@ -212,7 +241,7 @@ onMounted(async () => {
       </div>
 
       <!-- 多选题选项区域 -->
-      <div v-if="questionType == '多选题'" class="options-container">
+      <div v-if="questionType == '1'" class="options-container">
         <el-checkbox-group v-model="selectedOptions" @change="handleCheckboxChange">
           <div class="option-item" v-for="option in options" :key="option.value">
             <el-checkbox :label="option.value" class="custom-checkbox">
