@@ -39,6 +39,22 @@ const selectedOptions = ref<string[]>([]);
 const fillBlankAnswers = ref<string[]>([]);
 const isLoading = ref(false);
 
+// 从 getQuestion.user.js 格式转换为 Question 格式的函数
+const convertFromUserJsFormat = (userJsData: any): Question => {
+  // 转换选项格式：{ label, content } -> { value, text }
+  const convertedOptions = (userJsData.options || []).map((opt: any) => ({
+    value: opt.label,
+    text: opt.content
+  }));
+  
+  return {
+    id: userJsData.index?.toString() || '1',
+    type: userJsData.type || '0',
+    content: userJsData.title || '',
+    options: convertedOptions
+  };
+};
+
 // 异步获取题目函数（预留接口）
 const fetchQuestion = async (type?: string) => {
   try {
@@ -48,8 +64,8 @@ const fetchQuestion = async (type?: string) => {
     // 示例：const response = await axios.get('/api/question/random', { params: { type } });
     // const data = response.data;
     
-    // 模拟API响应数据
-    let mockData: Question;
+    // 模拟API响应数据（模拟 getQuestion.user.js 返回的格式）
+    let userJsData;
 
     //TODO: 删除debug
 
@@ -59,47 +75,50 @@ const fetchQuestion = async (type?: string) => {
     const normalizedType = type || '0'; // 默认单选题
 
     if (normalizedType === '3') { // 判断题
-      mockData = {
-        id: '1',
+      userJsData = {
+        index: 1,
         type: '3',
-        content: '这是一道测试判断题，请判断对错。',
+        title: '这是一道测试判断题，请判断对错。',
         options: [
-          { value: 'true', text: '正确' },
-          { value: 'false', text: '错误' }
+          { label: 'true', content: '正确' },
+          { label: 'false', content: '错误' }
         ]
       };
     } else if (normalizedType === '2') { // 填空题
-      mockData = {
-        id: '1',
+      userJsData = {
+        index: 1,
         type: '2',
-        content: '请填写以下空白处：Vue 3 的核心特性包括 Composition API、______ 和 ______。',
+        title: '请填写以下空白处：Vue 3 的核心特性包括 Composition API、______ 和 ______。',
         options: []
       };
     } else if (normalizedType === '1') { // 多选题
-      mockData = {
-        id: '1',
+      userJsData = {
+        index: 1,
         type: '1',
-        content: '这是一道测试题目，请选择正确的答案。',
+        title: '这是一道测试题目，请选择正确的答案。',
         options: [
-          { value: 'A', text: '选项1' },
-          { value: 'B', text: '选项2' },
-          { value: 'C', text: '选项3' },
-          { value: 'D', text: '选项4' }
+          { label: 'A', content: '选项1' },
+          { label: 'B', content: '选项2' },
+          { label: 'C', content: '选项3' },
+          { label: 'D', content: '选项4' }
         ]
       };
     } else { // 单选题
-      mockData = {
-        id: '1',
+      userJsData = {
+        index: 1,
         type: '0',
-        content: '这是一道测试题目，请选择正确的答案。',
+        title: '这是一道测试题目，请选择正确的答案。',
         options: [
-          { value: 'A', text: '选项1' },
-          { value: 'B', text: '选项2' },
-          { value: 'C', text: '选项3' },
-          { value: 'D', text: '选项4' }
+          { label: 'A', content: '选项1' },
+          { label: 'B', content: '选项2' },
+          { label: 'C', content: '选项3' },
+          { label: 'D', content: '选项4' }
         ]
       };
     }
+    
+    // 转换数据格式
+    const mockData = convertFromUserJsFormat(userJsData);
     
     // 更新题目数据
     questionType.value = mockData.type;
