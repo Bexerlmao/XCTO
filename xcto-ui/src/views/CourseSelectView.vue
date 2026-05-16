@@ -2,77 +2,37 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
+import { getCourseList } from '@/api/course'
+import type { Course } from '@/types/api'
 
 const router = useRouter()
-
-interface Course {
-  id: number
-  classId: number
-  name: string
-  description: string
-  questionTotal: number
-  cover?: string
-}
 
 const courses = ref<Course[]>([])
 const loading = ref(false)
 const searchKeyword = ref('')
-const currentPage = ref(1)
-const pageSize = ref(12)
-const total = ref(0)
 
-// TODO: 替换为实际的 API 调用
 const fetchCourses = async () => {
   loading.value = true
   try {
-    // const response = await fetch('/api/courses', {
-    //   method: 'GET',
-    // })
-    // const data = await response.json()
-    // courses.value = data.records
-    // total.value = data.total
-
-    // 硬编码课程数据
-    courses.value = [
-      { id: 1, classId: 1001, name: '高等数学', description: '微积分、线性代数与概率统计基础', questionTotal: 120 },
-      { id: 2, classId: 1002, name: '大学英语', description: '英语听说读写综合能力训练', questionTotal: 85 },
-      { id: 3, classId: 1003, name: '数据结构与算法', description: '常见数据结构与经典算法分析', questionTotal: 200 },
-      { id: 4, classId: 1004, name: '计算机网络', description: 'TCP/IP协议栈与网络通信原理', questionTotal: 150 },
-      { id: 5, classId: 1005, name: '马克思主义原理', description: '马克思主义哲学、政治经济学与科学社会主义', questionTotal: 98 },
-      { id: 6, classId: 1006, name: '操作系统', description: '进程管理、内存管理与文件系统', questionTotal: 175 },
-      { id: 7, classId: 1007, name: '数据库原理', description: '关系型数据库设计与SQL应用', questionTotal: 130 },
-      { id: 8, classId: 1008, name: '软件工程', description: '软件开发流程、设计模式与项目管理', questionTotal: 110 },
-    ]
-    total.value = 8
-  } catch (error) {
+    courses.value = await getCourseList()
+  } catch {
     ElMessage.error('获取课程列表失败')
-    console.error('获取课程列表失败:', error)
   } finally {
     loading.value = false
   }
 }
 
-// TODO: 替换为实际的搜索 API 调用
-const handleSearch = async () => {
-  loading.value = true
-  try {
-    // const response = await fetch(`/api/courses/search?keyword=${searchKeyword.value}&page=${currentPage.value}&size=${pageSize.value}`)
-    // const data = await response.json()
-    // courses.value = data.records
-    // total.value = data.total
-
-    console.log('搜索关键词:', searchKeyword.value)
-  } catch (error) {
-    ElMessage.error('搜索失败')
-    console.error('搜索失败:', error)
-  } finally {
-    loading.value = false
+const handleSearch = () => {
+  // 客户端按 classId 过滤
+  if (searchKeyword.value) {
+    fetchCourses().then(() => {
+      courses.value = courses.value.filter((c) =>
+        String(c.classId).includes(searchKeyword.value),
+      )
+    })
+  } else {
+    fetchCourses()
   }
-}
-
-const handlePageChange = (page: number) => {
-  currentPage.value = page
-  fetchCourses()
 }
 
 const handleEnterCourse = (course: Course) => {
@@ -127,27 +87,16 @@ onMounted(() => {
           @click="handleEnterCourse(course)"
         >
           <div class="course-cover" :class="`cover-color-${index % 6}`">
-            <span class="cover-text">{{ course.name }}</span>
+            <span class="cover-text">班级 {{ course.classId }}</span>
             <span class="cover-count">{{ course.questionTotal }} 题</span>
           </div>
           <div class="course-footer">
-            <span class="course-desc">{{ course.description }}</span>
+            <span class="course-desc">classId: {{ course.classId }}</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 分页 -->
-    <div v-if="total > pageSize" class="pagination">
-      <el-pagination
-        v-model:current-page="currentPage"
-        :page-size="pageSize"
-        :total="total"
-        background
-        layout="prev, pager, next"
-        @current-change="handlePageChange"
-      />
-    </div>
   </div>
 </template>
 
@@ -283,10 +232,4 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-/* 分页 */
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 28px;
-}
 </style>

@@ -1,144 +1,63 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { ElCheckbox, ElCheckboxGroup, ElButton } from 'element-plus';
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { ElMessage, ElCheckbox, ElCheckboxGroup, ElButton } from 'element-plus'
+import { getRandomQuestion } from '@/api/question'
+import type { QuestionOption } from '@/types/api'
 
-// 题目数据接口定义
-interface QuestionOption {
-  value: string;
-  text: string;
-}
+const route = useRoute()
 
-interface Question {
-  id: string;
-  type: '0' | '1' | '2' | '3';
-  content: string;
-  options: QuestionOption[];
-}
+const classId = Number(route.query.classId)
 
-// 题目类型映射
 const questionTypeMap: Record<string, string> = {
   '0': '单选题',
   '1': '多选题',
   '2': '填空题',
-  '3': '判断题'
-};
+  '3': '判断题',
+}
 
-// 获取题目类型显示文本
 const getQuestionTypeText = (type: string | undefined): string => {
-  if (!type) return '';
-  return questionTypeMap[type] || type;
-};
+  if (!type) return ''
+  return questionTypeMap[type] || type
+}
 
-// 响应式状态
-const questionType = ref<string>('单选题');
-const questionContent = ref('');
-const options = ref<QuestionOption[]>([]);
-const isNextBtnDisabled = ref(true);
-const selectedOption = ref<string | null>(null);
-const selectedOptions = ref<string[]>([]);
-const fillBlankAnswers = ref<string[]>([]);
-const isLoading = ref(false);
+const questionId = ref<number>(0)
+const questionType = ref<string>('')
+const questionContent = ref('')
+const options = ref<QuestionOption[]>([])
+const isNextBtnDisabled = ref(true)
+const selectedOption = ref<string | null>(null)
+const selectedOptions = ref<string[]>([])
+const fillBlankAnswers = ref<string[]>([])
+const isLoading = ref(false)
 
-// 从 getQuestion.user.js 格式转换为 Question 格式的函数
-const convertFromUserJsFormat = (userJsData: any): Question => {
-  // 转换选项格式：{ label, content } -> { value, text }
-  const convertedOptions = (userJsData.options || []).map((opt: any) => ({
-    value: opt.label,
-    text: opt.content
-  }));
-  
-  return {
-    id: userJsData.index?.toString() || '1',
-    type: userJsData.type || '0',
-    content: userJsData.title || '',
-    options: convertedOptions
-  };
-};
+function mapOptions(raw: Record<number, string>): QuestionOption[] {
+  return Object.entries(raw).map(([key, text]) => ({
+    value: key,
+    text,
+  }))
+}
 
-// 异步获取题目函数（预留接口）
-const fetchQuestion = async (type?: string) => {
+const fetchQuestion = async () => {
+  isLoading.value = true
   try {
-    isLoading.value = true;
-    
-    // TODO: 替换为实际的API调用
-    // 示例：const response = await axios.get('/api/question/random', { params: { type } });
-    // const data = response.data;
-    
-    // 模拟API响应数据（模拟 getQuestion.user.js 返回的格式）
-    let userJsData;
+    const data = await getRandomQuestion(classId)
 
-    //TODO: 删除debug
+    questionId.value = data.id
+    questionType.value = String(data.questionType)
+    questionContent.value = data.question
+    options.value = data.options ? mapOptions(data.options) : []
 
-    type = '2' // 填空题
-
-    // 确保类型是数字字符串
-    const normalizedType = type || '0'; // 默认单选题
-
-    if (normalizedType === '3') { // 判断题
-      userJsData = {
-        index: 1,
-        type: '3',
-        title: '这是一道测试判断题，请判断对错。',
-        options: [
-          { label: 'true', content: '正确' },
-          { label: 'false', content: '错误' }
-        ]
-      };
-    } else if (normalizedType === '2') { // 填空题
-      userJsData = {
-        index: 1,
-        type: '2',
-        title: '请填写以下空白处：Vue 3 的核心特性包括 Composition API、______ 和 ______。',
-        options: []
-      };
-    } else if (normalizedType === '1') { // 多选题
-      userJsData = {
-        index: 1,
-        type: '1',
-        title: '这是一道测试题目，请选择正确的答案。',
-        options: [
-          { label: 'A', content: '选项1' },
-          { label: 'B', content: '选项2' },
-          { label: 'C', content: '选项3' },
-          { label: 'D', content: '选项4' }
-        ]
-      };
-    } else { // 单选题
-      userJsData = {
-        index: 1,
-        type: '0',
-        title: '这是一道测试题目，请选择正确的答案。',
-        options: [
-          { label: 'A', content: '选项1' },
-          { label: 'B', content: '选项2' },
-          { label: 'C', content: '选项3' },
-          { label: 'D', content: '选项4' }
-        ]
-      };
-    }
-    
-    // 转换数据格式
-    const mockData = convertFromUserJsFormat(userJsData);
-    
-    // 更新题目数据
-    questionType.value = mockData.type;
-    questionContent.value = mockData.content;
-    options.value = mockData.options;
-    
-    // 重置选择状态
-    selectedOption.value = null;
-    selectedOptions.value = [];
-    fillBlankAnswers.value = [];
-    isNextBtnDisabled.value = true;
-    
-    return mockData;
-  } catch (error) {
-    console.error('获取题目失败:', error);
-    throw error;
+    selectedOption.value = null
+    selectedOptions.value = []
+    fillBlankAnswers.value = []
+    isNextBtnDisabled.value = true
+  } catch {
+    ElMessage.error('获取题目失败')
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
-};
+}
 
 // 处理选项选择（单选）
 const handleOptionChange = (option: string) => {
@@ -172,21 +91,16 @@ const processFillBlankContent = (content: string) => {
 
 // 处理下一题点击
 const handleNextClick = async () => {
-  try {
-    // TODO: 这里可以添加提交答案的逻辑
-    // await submitAnswer({ questionId, answer: selectedOption.value || selectedOptions.value });
-    
-    // 获取下一道题目
-    await fetchQuestion(questionType.value);
-  } catch (error) {
-    console.error('切换题目失败:', error);
-  }
+  await fetchQuestion()
 };
 
 // 生命周期钩子
 onMounted(async () => {
-  // 组件挂载后加载第一道题目（测试填空题）
-  await fetchQuestion('2');
+  if (!classId) {
+    ElMessage.error('缺少班级ID参数')
+    return
+  }
+  await fetchQuestion()
 });
 </script>
 
