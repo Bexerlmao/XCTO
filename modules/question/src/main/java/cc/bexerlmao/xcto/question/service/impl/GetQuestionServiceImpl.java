@@ -5,7 +5,6 @@ import cc.bexerlmao.xcto.question.entity.Question;
 import cc.bexerlmao.xcto.question.entity.QuestionBatchRequest;
 import cc.bexerlmao.xcto.question.mapper.QuestionMapper;
 import cc.bexerlmao.xcto.question.service.GetQuestionService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -15,11 +14,13 @@ import java.util.stream.Collectors;
 @Service
 public class GetQuestionServiceImpl implements GetQuestionService {
 
-    @Autowired
-    private QuestionMapper questionMapper;
+    private final QuestionMapper questionMapper;
+    private final ChaoxingClassService chaoxingClassService;
 
-    @Autowired
-    private ChaoxingClassService chaoxingClassService;
+    public GetQuestionServiceImpl(QuestionMapper questionMapper, ChaoxingClassService chaoxingClassService) {
+        this.questionMapper = questionMapper;
+        this.chaoxingClassService = chaoxingClassService;
+    }
 
     @Override
     public void saveQuestion(Question question) {

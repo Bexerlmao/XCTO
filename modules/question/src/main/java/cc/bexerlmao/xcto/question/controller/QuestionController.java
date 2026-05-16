@@ -5,7 +5,6 @@ import cc.bexerlmao.xcto.question.entity.QuestionBatchRequest;
 import cc.bexerlmao.xcto.question.service.GetQuestionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,8 +16,11 @@ public class QuestionController {
 
     private static final Logger log = LoggerFactory.getLogger(QuestionController.class);
 
-    @Autowired
-    private GetQuestionService questionService;
+    private final GetQuestionService questionService;
+
+    public QuestionController(GetQuestionService questionService) {
+        this.questionService = questionService;
+    }
 
     @PostMapping("/save")
     public ResponseEntity<String> saveQuestion(@RequestBody Question question) {

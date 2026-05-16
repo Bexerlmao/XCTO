@@ -4,7 +4,6 @@ import cc.bexerlmao.xcto.chaoxingClass.entity.ChaoxingClassEntity;
 import cc.bexerlmao.xcto.chaoxingClass.mapper.ChaoxingClassMapper;
 import cc.bexerlmao.xcto.chaoxingClass.service.ChaoxingClassService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -14,8 +13,11 @@ import java.util.Map;
 @Service
 public class ChaoxingClassServiceImpl implements ChaoxingClassService {
 
-    @Autowired
-    private ChaoxingClassMapper chaoxingClassMapper;
+    private final ChaoxingClassMapper chaoxingClassMapper;
+
+    public ChaoxingClassServiceImpl(ChaoxingClassMapper chaoxingClassMapper) {
+        this.chaoxingClassMapper = chaoxingClassMapper;
+    }
 
     @Override
     public Long getQuestionTotalById(Long id) {
