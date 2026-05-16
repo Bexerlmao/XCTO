@@ -17,7 +17,7 @@
             #{questionType},
             #{question},
             CAST(#{options, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler} AS jsonb),
-            #{answer},
+            CAST(#{answer, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler} AS jsonb),
             CURRENT_TIMESTAMP,
             CURRENT_TIMESTAMP
         )
@@ -40,7 +40,7 @@
                 #{item.questionType},
                 #{item.question},
                 CAST(#{item.options, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler} AS jsonb),
-                #{item.answer},
+                CAST(#{item.answer, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler} AS jsonb),
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
             )
@@ -50,6 +50,11 @@
     <!-- 查询题目 -->
     <select id="selectQuestionById" parameterType="Long" resultType="cc.bexerlmao.xcto.question.entity.Question">
         SELECT * FROM question WHERE id = #{id}
+    </select>
+
+    <!-- 随机获取班级下的一道题目 -->
+    <select id="selectRandomQuestionByClassId" parameterType="Long" resultType="cc.bexerlmao.xcto.question.entity.Question">
+        SELECT * FROM question WHERE class_id = #{classId} ORDER BY RANDOM() LIMIT 1
     </select>
     
     <!-- 查询所有题目 -->
@@ -69,7 +74,7 @@
             question_type = #{questionType},
             question = #{question},
             options = CAST(#{options, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler} AS jsonb),
-            answer = #{answer},
+            answer = CAST(#{answer, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler} AS jsonb),
             update_time = CURRENT_TIMESTAMP
         WHERE id = #{id}
     </update>

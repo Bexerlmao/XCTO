@@ -2,25 +2,28 @@ package cc.bexerlmao.xcto.question.entity;
 
 import cc.bexerlmao.xcto.question.QuestionType;
 import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
 @TableName("`question`")
 public class Question {
 
-    private long id;
-    private long classId;
+    private Long id;
+    private Long classId;
     private QuestionType questionType;
     private String question;
     private Map<Integer, String> options;
-    private Integer answer;
+    private List<String> answer;
 
     public Question() {
     }
 
-    public Question(long classId, String question,QuestionType questionType, Map<Integer, String> options, Integer answer) {
+    public Question(@Nonnull Long classId, @Nonnull String question, @Nonnull QuestionType questionType, @Nonnull Map<Integer, String> options, List<String> answer) {
         this.classId = classId;
         this.question = question;
         this.questionType = questionType;

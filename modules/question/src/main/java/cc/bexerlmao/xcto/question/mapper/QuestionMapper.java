@@ -15,6 +15,8 @@ public interface QuestionMapper extends BaseMapper<Question> {
 
     Question selectQuestionById(Long id);
 
+    Question selectRandomQuestionByClassId(Long classId);
+
     List<Question> selectAllQuestions();
 
     List<Question> selectQuestionsByClassId(Long classId);
