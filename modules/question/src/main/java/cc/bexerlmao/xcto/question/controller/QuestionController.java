@@ -3,7 +3,10 @@ package cc.bexerlmao.xcto.question.controller;
 import cc.bexerlmao.xcto.question.entity.Question;
 import cc.bexerlmao.xcto.question.entity.QuestionBatchRequest;
 import cc.bexerlmao.xcto.question.service.GetQuestionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,48 +15,53 @@ import java.util.List;
 @RequestMapping("/question")
 public class QuestionController {
 
+    private static final Logger log = LoggerFactory.getLogger(QuestionController.class);
+
     @Autowired
     private GetQuestionService questionService;
 
     @PostMapping("/save")
-    public String saveQuestion(@RequestBody Question question) {
+    public ResponseEntity<String> saveQuestion(@RequestBody Question question) {
         try {
             questionService.saveQuestion(question);
-            return "success";
+            return ResponseEntity.ok("success");
         } catch (Exception e) {
-            e.printStackTrace();
-            return "error: " + e.getMessage();
+            log.error("Failed to save question", e);
+            return ResponseEntity.internalServerError().body("error");
         }
     }
 
     @PostMapping("/saveBatch")
-    public String saveQuestions(@RequestBody List<Question> questions) {
+    public ResponseEntity<String> saveQuestions(@RequestBody List<Question> questions) {
         try {
             questionService.saveQuestions(questions);
-            return "success";
+            return ResponseEntity.ok("success");
         } catch (Exception e) {
-            e.printStackTrace();
-            return "error: " + e.getMessage();
+            log.error("Failed to batch save questions", e);
+            return ResponseEntity.internalServerError().body("error");
         }
     }
 
     @PostMapping("/saveBatchNew")
-    public String saveQuestionsNew(@RequestBody QuestionBatchRequest request) {
+    public ResponseEntity<String> saveQuestionsNew(@RequestBody QuestionBatchRequest request) {
         try {
             questionService.saveQuestionsNew(request);
-            return "success";
+            return ResponseEntity.ok("success");
         } catch (Exception e) {
-            e.printStackTrace();
-            return "error: " + e.getMessage();
+            log.error("Failed to batch save questions (new)", e);
+            return ResponseEntity.internalServerError().body("error");
         }
     }
 
     @GetMapping("/{classId}")
-    public Question getQuestion(@PathVariable Long classId) {
+    public ResponseEntity<Question> getQuestion(@PathVariable Long classId) {
         Question question = questionService.getRandomQuestion(classId);
+        if (question == null) {
+            return ResponseEntity.notFound().build();
+        }
         Question result = questionService.deepCopyQuestion(question);
         result.setAnswer(null);
-        return result;
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/getAll")
@@ -62,13 +70,13 @@ public class QuestionController {
     }
 
     @PutMapping("/update")
-    public String updateQuestion(@RequestBody Question question) {
+    public ResponseEntity<String> updateQuestion(@RequestBody Question question) {
         try {
             questionService.updateQuestion(question);
-            return "success";
+            return ResponseEntity.ok("success");
         } catch (Exception e) {
-            e.printStackTrace();
-            return "error: " + e.getMessage();
+            log.error("Failed to update question", e);
+            return ResponseEntity.internalServerError().body("error");
         }
     }
 
