@@ -19,7 +19,6 @@ public interface GetQuestionService {
 
     void saveQuestionsNew(QuestionBatchRequest request);
 
-
     Question getQuestionById(Long id);
 
     Question getRandomQuestion(Long classId);
@@ -32,7 +31,9 @@ public interface GetQuestionService {
 
     void updateQuestion(Question question);
 
-
     void deleteQuestion(Long id);
 
+    Boolean checkQuestionAnswer(Long questionId, List<String> userAnswers);
+
+    Question deepCopyQuestion(Question sourceQuestion);
 }

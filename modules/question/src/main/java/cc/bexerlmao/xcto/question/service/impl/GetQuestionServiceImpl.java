@@ -8,9 +8,7 @@ import cc.bexerlmao.xcto.question.service.GetQuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 
 @Service
@@ -39,10 +37,7 @@ public class GetQuestionServiceImpl implements GetQuestionService {
 
     @Override
     public Question getRandomQuestion(Long classId) {
-        Long questionTotal = chaoxingClassService.getQuestionTotalByClassId(classId);
-        Random random = new Random();
-        random.setSeed(LocalTime.now().toNanoOfDay());
-        return questionMapper.selectQuestionById(random.nextLong(questionTotal));
+        return questionMapper.selectRandomQuestionByClassId(classId);
     }
 
     @Override
@@ -71,23 +66,41 @@ public class GetQuestionServiceImpl implements GetQuestionService {
         if (questions == null || questions.isEmpty()) {
             return;
         }
-        
+
         long classId = request.getClassId();
-        // 为每个题目设置classId，确保一致性
         for (Question question : questions) {
             question.setClassId(classId);
         }
-        
+
         questionMapper.batchInsertQuestion(questions);
-        // 更新班级题目总数
-        Long currentTotal = chaoxingClassService.getQuestionTotalByClassId((long) classId);
+
+        Long currentTotal = chaoxingClassService.getQuestionTotalByClassId(classId);
         if (currentTotal == null) {
-            // 班级不存在，插入新记录
             chaoxingClassService.insertClass(classId);
         } else {
-            // 班级存在，更新题目总数
-            chaoxingClassService.updateClassTotalByClassId((long) classId, currentTotal + questions.size());
+            chaoxingClassService.updateClassTotalByClassId(classId, currentTotal + questions.size());
         }
+    }
+
+    @Override
+    public Boolean checkQuestionAnswer(Long questionId, List<String> userAnswers) {
+        Question question = questionMapper.selectQuestionById(questionId);
+        if (question == null) {
+            return false;
+        }
+        return question.getAnswer().equals(userAnswers);
+    }
+
+    @Override
+    public Question deepCopyQuestion(Question sourceQuestion) {
+        Question resultQuestion = new Question();
+        resultQuestion.setId(sourceQuestion.getId());
+        resultQuestion.setQuestion(sourceQuestion.getQuestion());
+        resultQuestion.setQuestionType(sourceQuestion.getQuestionType());
+        resultQuestion.setOptions(sourceQuestion.getOptions());
+        resultQuestion.setAnswer(sourceQuestion.getAnswer());
+        resultQuestion.setClassId(sourceQuestion.getClassId());
+        return resultQuestion;
     }
 
 }
