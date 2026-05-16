@@ -1,11 +1,14 @@
 package cc.bexerlmao.xcto.chaoxingClass.service.impl;
 
+import cc.bexerlmao.xcto.chaoxingClass.entity.ChaoxingClassEntity;
 import cc.bexerlmao.xcto.chaoxingClass.mapper.ChaoxingClassMapper;
 import cc.bexerlmao.xcto.chaoxingClass.service.ChaoxingClassService;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -40,5 +43,10 @@ public class ChaoxingClassServiceImpl implements ChaoxingClassService {
     @Override
     public void insertClass(Long classId) {
         chaoxingClassMapper.insertClass(classId);
+    }
+
+    @Override
+    public List<ChaoxingClassEntity> listAllClasses() {
+        return chaoxingClassMapper.selectList(new QueryWrapper<ChaoxingClassEntity>().orderByAsc("class_id"));
     }
 }
