@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -23,11 +24,19 @@ public class GetQuestionServiceImpl implements GetQuestionService {
     @Override
     public void saveQuestion(Question question) {
         questionMapper.insertQuestion(question);
+        incrementClassTotal(question.getClassId(), 1L);
     }
 
     @Override
     public void saveQuestions(List<Question> questions) {
         questionMapper.batchInsertQuestion(questions);
+
+        Map<Long, Long> classCountMap = questions.stream()
+                .collect(Collectors.groupingBy(Question::getClassId, Collectors.counting()));
+
+        for (Map.Entry<Long, Long> entry : classCountMap.entrySet()) {
+            incrementClassTotal(entry.getKey(), entry.getValue());
+        }
     }
 
     @Override
@@ -77,15 +86,14 @@ public class GetQuestionServiceImpl implements GetQuestionService {
         Long currentTotal = chaoxingClassService.getQuestionTotalByClassId(classId);
         if (currentTotal == null) {
             chaoxingClassService.insertClass(classId);
-        } else {
-            chaoxingClassService.updateClassTotalByClassId(classId, currentTotal + questions.size());
         }
+        chaoxingClassService.updateClassTotalByClassId(classId, (long) questions.size());
     }
 
     @Override
     public Boolean checkQuestionAnswer(Long questionId, List<String> userAnswers) {
         Question question = questionMapper.selectQuestionById(questionId);
-        if (question == null) {
+        if (question == null || question.getAnswer() == null) {
             return false;
         }
         return question.getAnswer().equals(userAnswers);
@@ -97,10 +105,20 @@ public class GetQuestionServiceImpl implements GetQuestionService {
         resultQuestion.setId(sourceQuestion.getId());
         resultQuestion.setQuestion(sourceQuestion.getQuestion());
         resultQuestion.setQuestionType(sourceQuestion.getQuestionType());
-        resultQuestion.setOptions(sourceQuestion.getOptions());
-        resultQuestion.setAnswer(sourceQuestion.getAnswer());
+        resultQuestion.setOptions(sourceQuestion.getOptions() != null
+                ? new HashMap<>(sourceQuestion.getOptions()) : null);
+        resultQuestion.setAnswer(sourceQuestion.getAnswer() != null
+                ? new ArrayList<>(sourceQuestion.getAnswer()) : null);
         resultQuestion.setClassId(sourceQuestion.getClassId());
         return resultQuestion;
+    }
+
+    private void incrementClassTotal(Long classId, Long delta) {
+        Long currentTotal = chaoxingClassService.getQuestionTotalByClassId(classId);
+        if (currentTotal == null) {
+            chaoxingClassService.insertClass(classId);
+        }
+        chaoxingClassService.updateClassTotalByClassId(classId, delta);
     }
 
 }
