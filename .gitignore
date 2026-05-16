@@ -77,3 +77,10 @@ xcto-ui/__screenshots__/
 # Vite
 xcto-ui/*.timestamp-*-*.mjs
 
+### Claude Code ###
+CLAUDE.md
+.claude/
+
+### Script artifacts ###
+script/other.js
+
