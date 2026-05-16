@@ -7,10 +7,11 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @ComponentScan({
-        "cc.bexerlmao.question",
-        "cc.bexerlmao.application"
+        "cc.bexerlmao.xcto.question",
+        "cc.bexerlmao.xcto.application",
+        "cc.bexerlmao.xcto.chaoxingClass"
 })
-@MapperScan("cc.bexerlmao.question.mapper")
+@MapperScan("cc.bexerlmao.xcto")
 public class Application {
 
     public static void main(String[] args) {
