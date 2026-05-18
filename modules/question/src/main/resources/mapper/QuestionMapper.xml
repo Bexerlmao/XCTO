@@ -3,7 +3,7 @@
 <mapper namespace="cc.bexerlmao.xcto.question.mapper.QuestionMapper">
     
     <!-- 插入题目 -->
-    <insert id="insertQuestion" parameterType="cc.bexerlmao.xcto.question.entity.Question">
+    <insert id="insertQuestion" parameterType="cc.bexerlmao.xcto.question.pojo.Question">
         INSERT INTO question (
             class_id,
             question_type,
@@ -48,27 +48,27 @@
     </insert>
     
     <!-- 查询题目 -->
-    <select id="selectQuestionById" parameterType="Long" resultType="cc.bexerlmao.xcto.question.entity.Question">
+    <select id="selectQuestionById" parameterType="Long" resultType="cc.bexerlmao.xcto.question.pojo.Question">
         SELECT * FROM question WHERE id = #{id}
     </select>
 
     <!-- 随机获取班级下的一道题目 -->
-    <select id="selectRandomQuestionByClassId" parameterType="Long" resultType="cc.bexerlmao.xcto.question.entity.Question">
+    <select id="selectRandomQuestionByClassId" parameterType="Long" resultType="cc.bexerlmao.xcto.question.pojo.Question">
         SELECT * FROM question WHERE class_id = #{classId} ORDER BY RANDOM() LIMIT 1
     </select>
     
     <!-- 查询所有题目 -->
-    <select id="selectAllQuestions" resultType="cc.bexerlmao.xcto.question.entity.Question">
+    <select id="selectAllQuestions" resultType="cc.bexerlmao.xcto.question.pojo.Question">
         SELECT * FROM question ORDER BY create_time DESC
     </select>
     
     <!-- 根据班级ID查询题目 -->
-    <select id="selectQuestionsByClassId" parameterType="Long" resultType="cc.bexerlmao.xcto.question.entity.Question">
+    <select id="selectQuestionsByClassId" parameterType="Long" resultType="cc.bexerlmao.xcto.question.pojo.Question">
         SELECT * FROM question WHERE class_id = #{classId} ORDER BY create_time DESC
     </select>
     
     <!-- 更新题目 -->
-    <update id="updateQuestion" parameterType="cc.bexerlmao.xcto.question.entity.Question">
+    <update id="updateQuestion" parameterType="cc.bexerlmao.xcto.question.pojo.Question">
         UPDATE question SET
             class_id = #{classId},
             question_type = #{questionType},

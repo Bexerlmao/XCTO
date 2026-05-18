@@ -1,6 +1,6 @@
 package cc.bexerlmao.xcto.question.mapper;
 
-import cc.bexerlmao.xcto.question.entity.Question;
+import cc.bexerlmao.xcto.question.pojo.Question;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 

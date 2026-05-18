@@ -1,8 +1,8 @@
 package cc.bexerlmao.xcto.question.service.impl;
 
 import cc.bexerlmao.xcto.chaoxingClass.service.ChaoxingClassService;
-import cc.bexerlmao.xcto.question.entity.Question;
-import cc.bexerlmao.xcto.question.entity.QuestionBatchRequest;
+import cc.bexerlmao.xcto.question.pojo.Question;
+import cc.bexerlmao.xcto.question.pojo.QuestionBatchRequest;
 import cc.bexerlmao.xcto.question.mapper.QuestionMapper;
 import cc.bexerlmao.xcto.question.service.GetQuestionService;
 import org.springframework.stereotype.Service;

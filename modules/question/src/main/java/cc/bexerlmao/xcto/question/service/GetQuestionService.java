@@ -1,7 +1,7 @@
 package cc.bexerlmao.xcto.question.service;
 
-import cc.bexerlmao.xcto.question.entity.Question;
-import cc.bexerlmao.xcto.question.entity.QuestionBatchRequest;
+import cc.bexerlmao.xcto.question.pojo.Question;
+import cc.bexerlmao.xcto.question.pojo.QuestionBatchRequest;
 
 import java.util.List;
 

@@ -1,9 +1,8 @@
-package cc.bexerlmao.xcto.question.entity;
+package cc.bexerlmao.xcto.question.pojo;
 
 import cc.bexerlmao.xcto.question.QuestionType;
 import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import lombok.Data;
 
 import java.util.List;

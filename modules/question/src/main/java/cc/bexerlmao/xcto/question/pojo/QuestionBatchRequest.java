@@ -1,4 +1,4 @@
-package cc.bexerlmao.xcto.question.entity;
+package cc.bexerlmao.xcto.question.pojo;
 
 import lombok.Data;
 

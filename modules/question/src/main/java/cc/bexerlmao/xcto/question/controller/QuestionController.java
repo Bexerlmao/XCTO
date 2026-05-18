@@ -1,7 +1,7 @@
 package cc.bexerlmao.xcto.question.controller;
 
-import cc.bexerlmao.xcto.question.entity.Question;
-import cc.bexerlmao.xcto.question.entity.QuestionBatchRequest;
+import cc.bexerlmao.xcto.question.pojo.Question;
+import cc.bexerlmao.xcto.question.pojo.QuestionBatchRequest;
 import cc.bexerlmao.xcto.question.service.GetQuestionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
