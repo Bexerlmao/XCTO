@@ -1,6 +1,6 @@
 package cc.bexerlmao.xcto.chaoxingClass.service;
 
-import cc.bexerlmao.xcto.chaoxingClass.entity.ChaoxingClassEntity;
+import cc.bexerlmao.xcto.chaoxingClass.pojo.ChaoxingClassBo;
 
 import java.util.List;
 
@@ -14,6 +14,6 @@ public interface ChaoxingClassService {
 
     void insertClass(Long classId);
 
-    List<ChaoxingClassEntity> listAllClasses();
+    List<ChaoxingClassBo> listAllClasses();
 
 }

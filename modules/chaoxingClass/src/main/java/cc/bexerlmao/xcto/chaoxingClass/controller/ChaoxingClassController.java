@@ -1,6 +1,6 @@
 package cc.bexerlmao.xcto.chaoxingClass.controller;
 
-import cc.bexerlmao.xcto.chaoxingClass.entity.ChaoxingClassEntity;
+import cc.bexerlmao.xcto.chaoxingClass.pojo.ChaoxingClassBo;
 import cc.bexerlmao.xcto.chaoxingClass.service.ChaoxingClassService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,7 +19,7 @@ public class ChaoxingClassController {
     }
 
     @GetMapping("/list")
-    public List<ChaoxingClassEntity> listClasses() {
+    public List<ChaoxingClassBo> listClasses() {
         return chaoxingClassService.listAllClasses();
     }
 }
