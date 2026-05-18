@@ -17,4 +17,10 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    proxy: {
+      '/question': 'http://localhost:8081',
+      '/chaoxingClass': 'http://localhost:8081',
+    },
+  },
 })
