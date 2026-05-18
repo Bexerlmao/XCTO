@@ -41,6 +41,18 @@
         </dependency>
 
         <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>3.5.15</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.mybatis.spring.boot</groupId>
+                    <artifactId>mybatis-spring-boot-starter</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
@@ -49,6 +61,11 @@
         <dependency>
             <groupId>cc.bexerlmao</groupId>
             <artifactId>question</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>cc.bexerlmao</groupId>
+            <artifactId>chaoxingClass</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
