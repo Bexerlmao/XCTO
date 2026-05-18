@@ -11,7 +11,7 @@ import org.springframework.context.annotation.ComponentScan;
         "cc.bexerlmao.xcto.application",
         "cc.bexerlmao.xcto.chaoxingClass"
 })
-@MapperScan("cc.bexerlmao.xcto")
+@MapperScan("cc.bexerlmao.xcto.**.mapper")
 public class Application {
 
     public static void main(String[] args) {
