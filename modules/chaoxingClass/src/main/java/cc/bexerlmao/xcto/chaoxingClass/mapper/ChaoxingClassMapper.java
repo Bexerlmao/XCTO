@@ -17,4 +17,6 @@ public interface ChaoxingClassMapper extends BaseMapper<ChaoxingClassBo> {
     void insertClass (Long classId);
 
     void updateClassTotalByClassId(Map<String, Long> params);
+
+    List<ChaoxingClassBo> getAllClasses();
 }
