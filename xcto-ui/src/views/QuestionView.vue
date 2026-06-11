@@ -31,7 +31,7 @@ const selectedOptions = ref<string[]>([])
 const fillBlankAnswers = ref<string[]>([])
 const isLoading = ref(false)
 
-function mapOptions(raw: Record<number, string>): QuestionOption[] {
+function mapOptions(raw: Record<string, string>): QuestionOption[] {
   return Object.entries(raw).map(([key, text]) => ({
     value: key,
     text,
@@ -86,7 +86,16 @@ const handleFillBlankChange = (index: number, value: string | undefined) => {
 
 // 处理填空题内容，将空白处替换为输入框
 const processFillBlankContent = (content: string) => {
-  return content.split('______');
+  return content.split(/\{(\d+)\}/g);
+};
+
+const isBlankMarker = (part: string) => {
+  return /^\d+$/.test(part);
+};
+
+const getPlaceholder = (blankIndex: number): string => {
+  const option = options.value.find(o => o.value === String(blankIndex));
+  return option?.text || '请填写';
 };
 
 // 处理下一题点击
@@ -159,15 +168,14 @@ onMounted(async () => {
       <div v-if="questionType == '2'" class="options-container">
         <div class="fill-blank-content">
           <template v-for="(part, index) in processFillBlankContent(questionContent)" :key="index">
-            <span v-if="index < processFillBlankContent(questionContent).length - 1">
-              {{ part }}
-              <input 
-                v-model="fillBlankAnswers[index]" 
+            <template v-if="isBlankMarker(part)">
+              <input
+                v-model="fillBlankAnswers[Number(part)]"
                 class="inline-fill-blank-input"
-                placeholder="请填写"
-                @input="handleFillBlankChange(index, fillBlankAnswers[index])"
+                :placeholder="getPlaceholder(Number(part))"
+                @input="handleFillBlankChange(Number(part), fillBlankAnswers[Number(part)])"
               >
-            </span>
+            </template>
             <span v-else>{{ part }}</span>
           </template>
         </div>

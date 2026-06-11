@@ -4,7 +4,7 @@ export interface Question {
   classId: number
   questionType: number
   question: string
-  options: Record<number, string>
+  options: Record<string, string>
 }
 
 /** 前端使用的选项格式 */
