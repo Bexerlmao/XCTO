@@ -19,8 +19,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/question': 'http://localhost:8081',
-      '/chaoxingClass': 'http://localhost:8081',
+      '/question': 'http://localhost:65535',
+      '/chaoxingClass': 'http://localhost:65535',
     },
   },
 })
