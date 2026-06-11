@@ -19,3 +19,9 @@ export interface Course {
   classId: number
   questionTotal: number
 }
+
+/** 答案检查结果 */
+export interface CheckResult {
+  correct: boolean
+  correctAnswers: string[]
+}

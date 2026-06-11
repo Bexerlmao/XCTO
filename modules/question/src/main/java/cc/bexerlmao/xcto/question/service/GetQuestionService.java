@@ -1,5 +1,6 @@
 package cc.bexerlmao.xcto.question.service;
 
+import cc.bexerlmao.xcto.question.pojo.CheckResult;
 import cc.bexerlmao.xcto.question.pojo.Question;
 import cc.bexerlmao.xcto.question.pojo.QuestionBatchRequest;
 
@@ -31,7 +32,7 @@ public interface GetQuestionService {
 
     void deleteQuestion(Long id);
 
-    Boolean checkQuestionAnswer(Long questionId, List<String> userAnswers);
+    CheckResult checkQuestionAnswer(Long questionId, List<String> userAnswers);
 
     Question deepCopyQuestion(Question sourceQuestion);
 }

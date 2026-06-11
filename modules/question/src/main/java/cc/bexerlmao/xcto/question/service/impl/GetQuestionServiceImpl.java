@@ -1,6 +1,7 @@
 package cc.bexerlmao.xcto.question.service.impl;
 
 import cc.bexerlmao.xcto.chaoxingClass.service.ChaoxingClassService;
+import cc.bexerlmao.xcto.question.pojo.CheckResult;
 import cc.bexerlmao.xcto.question.pojo.Question;
 import cc.bexerlmao.xcto.question.pojo.QuestionBatchRequest;
 import cc.bexerlmao.xcto.question.mapper.QuestionMapper;
@@ -95,16 +96,17 @@ public class GetQuestionServiceImpl implements GetQuestionService {
     }
 
     @Override
-    public Boolean checkQuestionAnswer(Long questionId, List<String> userAnswers) {
+    public CheckResult checkQuestionAnswer(Long questionId, List<String> userAnswers) {
         Question question = questionMapper.selectQuestionById(questionId);
         if (question == null || question.getAnswer() == null) {
-            return false;
+            return new CheckResult(false, List.of());
         }
         try {
             List<String> correctAnswers = objectMapper.readValue(question.getAnswer(), new TypeReference<List<String>>() {});
-            return correctAnswers.equals(userAnswers);
+            boolean isCorrect = correctAnswers.equals(userAnswers);
+            return new CheckResult(isCorrect, correctAnswers);
         } catch (Exception e) {
-            return false;
+            return new CheckResult(false, List.of());
         }
     }
 

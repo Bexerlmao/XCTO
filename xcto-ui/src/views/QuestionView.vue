@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElCheckbox, ElCheckboxGroup, ElButton } from 'element-plus'
-import { getRandomQuestion } from '@/api/question'
+import { getRandomQuestion, checkAnswer } from '@/api/question'
 import type { QuestionOption } from '@/types/api'
 
 const route = useRoute()
@@ -30,6 +30,9 @@ const selectedOption = ref<string | null>(null)
 const selectedOptions = ref<string[]>([])
 const fillBlankAnswers = ref<string[]>([])
 const isLoading = ref(false)
+const answerState = ref<'answering' | 'correct' | 'wrong'>('answering')
+const correctAnswers = ref<string[]>([])
+const isChecking = ref(false)
 
 function mapOptions(raw: Record<string, string>): QuestionOption[] {
   return Object.entries(raw).map(([key, text]) => ({
@@ -52,6 +55,8 @@ const fetchQuestion = async () => {
     selectedOptions.value = []
     fillBlankAnswers.value = []
     isNextBtnDisabled.value = true
+    answerState.value = 'answering'
+    correctAnswers.value = []
   } catch {
     ElMessage.error('获取题目失败')
   } finally {
@@ -98,9 +103,112 @@ const getPlaceholder = (blankIndex: number): string => {
   return option?.text || '请填写';
 };
 
+const radioMap:Record<string, string> = {
+  "0": "A",
+  "1": "B",
+  "2": "C",
+  "3": "D",
+  "4": "E",
+  "5": "F",
+  "6": "G",
+  "7": "H",
+  "8": "I",
+  "9": "J",
+  "10": "K",
+  "11": "L",
+  "12": "M",
+  "13": "N",
+  "14": "O",
+  "15": "P",
+  "16": "Q",
+  "17": "R",
+  "18": "S",
+  "19": "T",
+  "20": "U",
+  "21": "V",
+  "22": "W",
+  "23": "X",
+  "24": "Y",
+  "25": "Z"
+}
+
+const getQuestionRadio = (radioNumber: string) : string => radioMap[radioNumber]
+
+// 收集用户答案并映射为文本数组发送给后端
+const collectAnswers = (): string[] => {
+  const type = questionType.value
+  if (type === '0' || type === '3') {
+    // 单选 / 判断：key → text
+    const text = options.value.find(o => o.value === selectedOption.value)?.text
+    return text ? [text] : []
+  }
+  if (type === '1') {
+    // 多选：keys → texts
+    return selectedOptions.value
+      .map(key => options.value.find(o => o.value === key)?.text)
+      .filter((t): t is string => !!t)
+  }
+  if (type === '2') {
+    // 填空：已是文本
+    return fillBlankAnswers.value.map(a => (a || '').trim())
+  }
+  return []
+}
+
+// 选项 CSS 类（用于单选/多选/判断）
+const getOptionClass = (optionValue: string): string => {
+  if (answerState.value === 'answering') return ''
+  const optionText = options.value.find(o => o.value === optionValue)?.text
+  if (!optionText) return ''
+  const isCorrect = correctAnswers.value.includes(optionText)
+  if (isCorrect) return 'option-correct'
+  const isSelected =
+    questionType.value === '1'
+      ? selectedOptions.value.includes(optionValue)
+      : selectedOption.value === optionValue
+  if (isSelected && !isCorrect) return 'option-wrong'
+  return ''
+}
+
+// 填空输入框 CSS 类
+const getFillBlankClass = (index: number): string => {
+  if (answerState.value === 'answering') return ''
+  const userAnswer = (fillBlankAnswers.value[index] || '').trim()
+  const correctAnswer = correctAnswers.value[index] || ''
+  if (!userAnswer) return ''
+  return userAnswer === correctAnswer ? 'fill-input-correct' : 'fill-input-wrong'
+}
+
 // 处理下一题点击
 const handleNextClick = async () => {
-  await fetchQuestion()
+  // 错误状态下点击 → 直接跳到下一题
+  if (answerState.value === 'wrong') {
+    await fetchQuestion()
+    return
+  }
+
+  // 正在检查中 → 忽略重复点击
+  if (isChecking.value) return
+
+  // 收集答案并检查
+  const userAnswers = collectAnswers()
+  isChecking.value = true
+  try {
+    const result = await checkAnswer(questionId.value, userAnswers)
+    if (result.correct) {
+      answerState.value = 'correct'
+      setTimeout(() => {
+        fetchQuestion()
+      }, 1000)
+    } else {
+      answerState.value = 'wrong'
+      correctAnswers.value = result.correctAnswers
+    }
+  } catch {
+    ElMessage.error('检查答案失败')
+  } finally {
+    isChecking.value = false
+  }
 };
 
 // 生命周期钩子
@@ -130,17 +238,18 @@ onMounted(async () => {
 
       <!-- 单选题选项区域 -->
       <div v-if="questionType == '0'" class="options-container">
-        <div class="option-item" v-for="option in options" :key="option.value">
-          <input 
-            type="radio" 
-            :name="'option'" 
-            :id="`option${option.value}`" 
+        <div class="option-item" v-for="option in options" :key="option.value" :class="getOptionClass(option.value)">
+          <input
+            type="radio"
+            :name="'option'"
+            :id="`option${option.value}`"
             class="option-input"
             :checked="selectedOption === option.value"
+            :disabled="answerState !== 'answering'"
             @change="handleOptionChange(option.value)"
           >
           <label :for="`option${option.value}`" class="custom-radio">
-            <span class="radio-letter">{{ option.value }}</span>
+            <span class="radio-letter">{{ getQuestionRadio(option.value)}}</span>
           </label>
           <span class="option-text">{{ option.text }}</span>
         </div>
@@ -148,17 +257,18 @@ onMounted(async () => {
 
       <!-- 判断题选项区域 -->
       <div v-if="questionType == '3'" class="options-container">
-        <div class="option-item" v-for="option in options" :key="option.value">
-          <input 
-            type="radio" 
-            :name="'option'" 
-            :id="`option${option.value}`" 
+        <div class="option-item" v-for="option in options" :key="option.value" :class="getOptionClass(option.value)">
+          <input
+            type="radio"
+            :name="'option'"
+            :id="`option${option.value}`"
             class="option-input"
             :checked="selectedOption === option.value"
+            :disabled="answerState !== 'answering'"
             @change="handleOptionChange(option.value)"
           >
           <label :for="`option${option.value}`" class="custom-radio">
-            <span class="radio-letter">{{ option.value === 'true' ? '√' : '×' }}</span>
+            <span class="radio-letter">{{ option.value === '0' ? '√' : '×' }}</span>
           </label>
           <span class="option-text">{{ option.text }}</span>
         </div>
@@ -169,12 +279,19 @@ onMounted(async () => {
         <div class="fill-blank-content">
           <template v-for="(part, index) in processFillBlankContent(questionContent)" :key="index">
             <template v-if="isBlankMarker(part)">
-              <input
-                v-model="fillBlankAnswers[Number(part)]"
-                class="inline-fill-blank-input"
-                :placeholder="getPlaceholder(Number(part))"
-                @input="handleFillBlankChange(Number(part), fillBlankAnswers[Number(part)])"
-              >
+              <span class="inline-fill-blank-wrapper">
+                <input
+                  v-model="fillBlankAnswers[Number(part)]"
+                  class="inline-fill-blank-input"
+                  :class="getFillBlankClass(Number(part))"
+                  :placeholder="getPlaceholder(Number(part))"
+                  :disabled="answerState !== 'answering'"
+                  @input="handleFillBlankChange(Number(part), fillBlankAnswers[Number(part)])"
+                >
+                <span v-if="answerState === 'wrong' && correctAnswers[Number(part)]" class="correct-answer-hint">
+                  正确答案：{{ correctAnswers[Number(part)] }}
+                </span>
+              </span>
             </template>
             <span v-else>{{ part }}</span>
           </template>
@@ -183,10 +300,10 @@ onMounted(async () => {
 
       <!-- 多选题选项区域 -->
       <div v-if="questionType == '1'" class="options-container">
-        <el-checkbox-group v-model="selectedOptions" @change="handleCheckboxChange">
-          <div class="option-item" v-for="option in options" :key="option.value">
+        <el-checkbox-group v-model="selectedOptions" @change="handleCheckboxChange" :disabled="answerState !== 'answering'">
+          <div class="option-item" v-for="option in options" :key="option.value" :class="getOptionClass(option.value)">
             <el-checkbox :label="option.value" class="custom-checkbox">
-              <span class="checkbox-letter">{{ option.value }}</span>
+              <span class="checkbox-letter">{{ getQuestionRadio(option.value) }}</span>
               <span class="option-text">{{ option.text }}</span>
             </el-checkbox>
           </div>
@@ -194,13 +311,20 @@ onMounted(async () => {
       </div>
 
       <!-- 下一题按钮 -->
-      <el-button 
-        class="next-btn" 
-        :disabled="isNextBtnDisabled"
+      <el-button
+        class="next-btn"
+        :class="{
+          'btn-correct': answerState === 'correct',
+          'btn-wrong': answerState === 'wrong'
+        }"
+        :disabled="isNextBtnDisabled || isChecking || answerState === 'correct'"
+        :loading="isChecking"
         @click="handleNextClick"
-        type="primary"
+        :type="answerState === 'correct' ? 'success' : answerState === 'wrong' ? 'danger' : 'primary'"
       >
-        下一题
+        <template v-if="answerState === 'correct'">✓ 正确</template>
+        <template v-else-if="answerState === 'wrong'">✗ 错误，点击继续</template>
+        <template v-else>下一题</template>
       </el-button>
     </template>
   </div>
@@ -384,5 +508,59 @@ onMounted(async () => {
 
 .next-btn:disabled {
   cursor: not-allowed;
+}
+
+/* 答题反馈 — 正确的选项高亮 */
+.option-item.option-correct {
+  border-radius: 8px;
+  padding: 8px;
+  margin-left: -8px;
+  background: #f0f9eb;
+  border: 1px solid #67c23a;
+}
+
+/* 答题反馈 — 用户选错的选项高亮 */
+.option-item.option-wrong {
+  border-radius: 8px;
+  padding: 8px;
+  margin-left: -8px;
+  background: #fef0f0;
+  border: 1px solid #f56c6c;
+}
+
+/* 填空输入框正确/错误状态 */
+.inline-fill-blank-input.fill-input-correct {
+  border-color: #67c23a !important;
+  background: #f0f9eb;
+}
+
+.inline-fill-blank-input.fill-input-wrong {
+  border-color: #f56c6c !important;
+  background: #fef0f0;
+}
+
+/* 填空包装器 */
+.inline-fill-blank-wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  vertical-align: middle;
+}
+
+/* 正确答案提示 */
+.correct-answer-hint {
+  font-size: 12px;
+  color: #67c23a;
+  margin-top: 2px;
+}
+
+/* 按钮正确/错误状态 */
+.next-btn.btn-correct {
+  --el-button-bg-color: #67c23a;
+  --el-button-border-color: #67c23a;
+}
+
+.next-btn.btn-wrong {
+  --el-button-bg-color: #f56c6c;
+  --el-button-border-color: #f56c6c;
 }
 </style>

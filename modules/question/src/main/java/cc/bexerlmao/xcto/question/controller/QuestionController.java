@@ -1,5 +1,6 @@
 package cc.bexerlmao.xcto.question.controller;
 
+import cc.bexerlmao.xcto.question.pojo.CheckResult;
 import cc.bexerlmao.xcto.question.pojo.Question;
 import cc.bexerlmao.xcto.question.pojo.QuestionBatchRequest;
 import cc.bexerlmao.xcto.question.service.GetQuestionService;
@@ -84,7 +85,7 @@ public class QuestionController {
     }
 
     @PostMapping("/check/{questionId}")
-    public Boolean checkQuestionAnswer(@PathVariable Long questionId, @RequestBody List<String> answers) {
+    public CheckResult checkQuestionAnswer(@PathVariable Long questionId, @RequestBody List<String> answers) {
         return questionService.checkQuestionAnswer(questionId, answers);
     }
 }
