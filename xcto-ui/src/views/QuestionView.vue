@@ -195,6 +195,7 @@ const handleNextClick = async () => {
   isChecking.value = true
   try {
     const result = await checkAnswer(questionId.value, userAnswers)
+    correctAnswers.value = result.correctAnswers
     if (result.correct) {
       answerState.value = 'correct'
       setTimeout(() => {
@@ -202,7 +203,6 @@ const handleNextClick = async () => {
       }, 1000)
     } else {
       answerState.value = 'wrong'
-      correctAnswers.value = result.correctAnswers
     }
   } catch {
     ElMessage.error('检查答案失败')
@@ -288,8 +288,9 @@ onMounted(async () => {
                   :disabled="answerState !== 'answering'"
                   @input="handleFillBlankChange(Number(part), fillBlankAnswers[Number(part)])"
                 >
-                <span v-if="answerState === 'wrong' && correctAnswers[Number(part)]" class="correct-answer-hint">
-                  正确答案：{{ correctAnswers[Number(part)] }}
+                <span v-if="answerState === 'wrong' && correctAnswers[Number(part)]" class="correct-answer-row">
+                  <span class="correct-answer-label">正确答案</span>
+                  <span class="correct-answer-hint">{{ correctAnswers[Number(part)] }}</span>
                 </span>
               </span>
             </template>
@@ -394,7 +395,11 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   margin-bottom: 15px;
+  padding: 8px;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
   cursor: pointer;
+  transition: border-color 0.3s ease, background 0.3s ease;
 }
 
 /* 隐藏原生单选按钮 */
@@ -407,7 +412,7 @@ onMounted(async () => {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  border: 2px solid #ccc;
+  border: 1px solid #ccc;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -512,20 +517,32 @@ onMounted(async () => {
 
 /* 答题反馈 — 正确的选项高亮 */
 .option-item.option-correct {
-  border-radius: 8px;
-  padding: 8px;
-  margin-left: -8px;
   background: #f0f9eb;
-  border: 1px solid #67c23a;
+  border-color: #67c23a;
+}
+
+.option-item.option-correct .custom-radio {
+  background-color: #67c23a;
+  border-color: #67c23a;
+}
+
+.option-item.option-correct .custom-radio .radio-letter {
+  color: white;
 }
 
 /* 答题反馈 — 用户选错的选项高亮 */
 .option-item.option-wrong {
-  border-radius: 8px;
-  padding: 8px;
-  margin-left: -8px;
   background: #fef0f0;
-  border: 1px solid #f56c6c;
+  border-color: #f56c6c;
+}
+
+.option-item.option-wrong .custom-radio {
+  background-color: #f56c6c;
+  border-color: #f56c6c;
+}
+
+.option-item.option-wrong .custom-radio .radio-letter {
+  color: white;
 }
 
 /* 填空输入框正确/错误状态 */
@@ -546,11 +563,26 @@ onMounted(async () => {
   vertical-align: middle;
 }
 
+/* 正确答案行容器 */
+.correct-answer-row {
+  display: inline-block;
+  margin-top: 2px;
+}
+
+/* 正确答案标签 */
+.correct-answer-label {
+  font-size: 12px;
+  color: #67c23a;
+  background: rgba(103, 194, 58, 0.15);
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-right: 5px;
+}
+
 /* 正确答案提示 */
 .correct-answer-hint {
   font-size: 12px;
   color: #67c23a;
-  margin-top: 2px;
 }
 
 /* 按钮正确/错误状态 */
