@@ -2,10 +2,10 @@
 CREATE TABLE IF NOT EXISTS question (
     id SERIAL PRIMARY KEY,
     class_id BIGINT,
-    question_type VARCHAR(50),
+    question_type SMALLINT,
     question TEXT,
     options JSONB,
-    answer INTEGER,
+    answer JSONB,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

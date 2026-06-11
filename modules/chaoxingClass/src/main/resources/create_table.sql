@@ -3,6 +3,7 @@
 CREATE TABLE IF NOT EXISTS chaoxingClass (
     id SERIAL PRIMARY KEY,
     class_id BIGINT,
+    class_name VARCHAR(255),
     question_total BIGINT
 );
 
