@@ -62,6 +62,7 @@ public class QuestionController {
             return ResponseEntity.notFound().build();
         }
         Question result = questionService.deepCopyQuestion(question);
+        System.out.println("Question: " + question.toString());
         result.setAnswer(null);
         return ResponseEntity.ok(result);
     }
