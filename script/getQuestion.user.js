@@ -6,6 +6,8 @@
 // @author       Bexerlmao
 // @match        *://*.chaoxing.com/*
 // @connect      aichathelper.top
+// @connect      localhost
+// @connect      127.0.0.1
 // @grant        GM_addStyle
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -545,6 +547,103 @@
         return typeNames[type] || "未知类型";
     }
 
+    // ========== 课程映射（classId → className）==========
+
+    const COURSE_MAP_KEY = 'xcto_course_map';
+
+    /** 从 GM 存储加载课程映射表 */
+    function loadCourseMap() {
+        const raw = GM_getValue(COURSE_MAP_KEY, '{}');
+        try {
+            return JSON.parse(raw);
+        } catch {
+            return {};
+        }
+    }
+
+    /** 保存课程映射表到 GM 存储 */
+    function saveCourseMap(map) {
+        GM_setValue(COURSE_MAP_KEY, JSON.stringify(map));
+    }
+
+    /** 根据 classId 查课程名 */
+    function getCourseNameByClassId(classId) {
+        if (!classId) return null;
+        const map = loadCourseMap();
+        return map[String(classId)] || null;
+    }
+
+    /** 通过 API 抓取课程列表（POST mooc2-ans.chaoxing.com） */
+    /** 在指定文档中查找课程卡片并提取映射 */
+    function scrapeFromDoc(doc, label) {
+        const courseDivs = doc.querySelectorAll(
+            '#stuNormalCourseListDiv .course.clearfix, ' +
+            '#stuTopCourseListDiv .course.clearfix, ' +
+            '#isState .course.clearfix'
+        );
+        if (courseDivs.length === 0) return 0;
+
+        insertLog(`[DOM:${label}] 找到 ${courseDivs.length} 个课程卡片`, 'log');
+        const map = loadCourseMap();
+        let count = 0;
+
+        courseDivs.forEach(div => {
+            const clazzInput = div.querySelector('.course-cover input.clazzId');
+            const classId = clazzInput ? clazzInput.value : null;
+            const nameSpan = div.querySelector('.course-info .course-name');
+            const className = nameSpan ? (nameSpan.getAttribute('title') || nameSpan.innerText || '').trim() : null;
+
+            if (classId && className) {
+                map[String(classId)] = className;
+                count++;
+                insertLog(`  [DOM] ${classId} → "${className}"`, 'log');
+            }
+        });
+
+        if (count > 0) saveCourseMap(map);
+        insertLog(`[DOM:${label}] 抓取: ${count} 门 (总计 ${Object.keys(map).length} 门)`, 'log');
+        return count;
+    }
+
+    /** 通过 DOM 抓取课程列表（先查主文档，再查 #frame_content iframe，再查所有 iframe） */
+    function scrapeCourseMap() {
+        // 1. 主文档
+        let count = scrapeFromDoc(document, 'main');
+        if (count > 0) return count;
+
+        // 2. #frame_content iframe（i.chaoxing.com/base 的课程列表在这里）
+        const frameIframe = document.querySelector('#frame_content');
+        if (frameIframe && frameIframe.contentDocument) {
+            count = scrapeFromDoc(frameIframe.contentDocument, 'frame_content');
+            if (count > 0) return count;
+        }
+
+        // 3. 遍历所有 iframe
+        const allIframes = document.querySelectorAll('iframe');
+        for (const iframe of allIframes) {
+            try {
+                const doc = iframe.contentDocument || iframe.contentWindow?.document;
+                if (doc) {
+                    count = scrapeFromDoc(doc, iframe.id || iframe.src?.slice(0, 50));
+                    if (count > 0) return count;
+                }
+            } catch (e) {
+                // 跨域 iframe 无法访问，跳过
+            }
+        }
+
+        return 0;
+    }
+
+    /** 更新面板中的课程信息显示 */
+    function updateCourseInfoDisplay(classId, className) {
+        const el = document.getElementById('current-course-info');
+        if (el) {
+            el.value = className || classId || '';
+            el.title = `classId: ${classId}`;
+        }
+    }
+
     // 获取课程信息
     function getCourseInfo(iframeDoc) {
         const courseInfo = {
@@ -564,14 +663,12 @@
         courseInfo.clazzId = urlParams.get('clazzid') || urlParams.get('classId') || '';
         courseInfo.cpi = urlParams.get('cpi') || '';
 
-        // 从页面获取课程名称
-        const courseNameEl = document.querySelector('.course-name') || 
-                             document.querySelector('.courseName') ||
-                             document.querySelector('[class*="course"] h3') ||
-                             document.querySelector('.subTitle');
-        if (courseNameEl) {
-            courseInfo.courseName = courseNameEl.innerText.trim();
-        }
+        // 从课程映射表查找，命中则使用；未命中直接用 classId
+        const mappedName = getCourseNameByClassId(courseInfo.clazzId);
+        courseInfo.courseName = mappedName || courseInfo.clazzId || '';
+
+        // 更新面板显示
+        updateCourseInfoDisplay(courseInfo.clazzId, courseInfo.courseName);
 
         // 从页面获取章节名称
         const chapterNameEl = document.querySelector('.posCatalog_select.posCatalog_active > .posCatalog_name') ||
@@ -658,6 +755,87 @@
         }
         
         return questions;
+    }
+
+    // 将答案文本解析为后端格式的数组
+    function parseAnswerForBackend(answerText) {
+        if (!answerText) return [];
+        const trimmed = answerText.trim();
+        // 判断题
+        if (trimmed === '对' || trimmed === '正确') return ['对'];
+        if (trimmed === '错' || trimmed === '错误') return ['错'];
+        // 填空题（分号分隔）
+        if (trimmed.includes(';')) {
+            return trimmed.split(';').map(s => s.trim()).filter(s => s);
+        }
+        // 单选或多选（如 "D" 或 "ACD"），拆分为单个字母
+        if (/^[A-D]+$/.test(trimmed)) {
+            return trimmed.split('');
+        }
+        return [trimmed];
+    }
+
+    // 将解析结果保存到后端数据库
+    async function saveToBackend(result) {
+        const backendUrl = GM_getValue('backendUrl', 'http://localhost:65535');
+        const clazzIdStr = result.course.clazzId || result.course.courseId;
+
+        if (!clazzIdStr) {
+            insertLog('未获取到 classId，跳过保存到后端', 'warning');
+            return;
+        }
+
+        const classId = parseInt(clazzIdStr);
+        if (isNaN(classId) || classId <= 0) {
+            insertLog(`无效的 classId: ${clazzIdStr}，跳过保存`, 'warning');
+            return;
+        }
+
+        const backendQuestions = result.questions.map(q => {
+            const answerArray = q.answer && q.answer.code === 1
+                ? parseAnswerForBackend(q.answer.answer[0] || '')
+                : [];
+
+            return {
+                questionType: parseInt(q.type) || 0,
+                question: q.title,
+                options: JSON.stringify(q.optionsText || []),
+                answer: answerArray.length > 0 ? JSON.stringify(answerArray) : null
+            };
+        });
+
+        const payload = {
+            classId: classId,
+            className: result.course.courseName || null,
+            questions: backendQuestions
+        };
+
+        insertLog(`正在保存 ${backendQuestions.length} 道题目到后端...`, 'log');
+
+        try {
+            const response = await new Promise((resolve, reject) => {
+                GM_xmlhttpRequest({
+                    url: backendUrl + '/question/saveBatchNew',
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    data: JSON.stringify(payload),
+                    timeout: 15000,
+                    onload: (res) => {
+                        if (res.status === 200) {
+                            resolve(res.responseText);
+                        } else {
+                            reject(new Error(`HTTP ${res.status}: ${res.responseText}`));
+                        }
+                    },
+                    onerror: () => reject(new Error('网络请求失败')),
+                    ontimeout: () => reject(new Error('请求超时'))
+                });
+            });
+
+            insertLog(`保存成功: ${response}`, 'log');
+        } catch (e) {
+            insertLog(`保存到后端失败: ${e.message}`, 'warning');
+        }
     }
 
     // 主解析函数
@@ -789,7 +967,19 @@
                 </div>
                 <div class="box-content">
                     <div class="config-section">
+                        <div class="section-title">当前课程</div>
+                        <div class="config-row">
+                            <input type="text" id="current-course-info" placeholder="classId" style="width:160px;">
+                            <button id="save-course-name" title="保存课程名到映射表">💾</button>
+                        </div>
+                    </div>
+                    <div class="config-section">
                         <div class="section-title">配置信息</div>
+                        <div class="config-row">
+                            <span>后端地址:</span>
+                            <input type="text" id="backend-url" placeholder="http://localhost:65535">
+                            <button id="save-backend-url">保存</button>
+                        </div>
                         <div class="config-row">
                             <span>自动获取:</span>
                             <input type="checkbox" id="auto-answer" checked>
@@ -824,6 +1014,30 @@
 
     // 绑定按钮事件
     function bindEvents() {
+        // 保存课程名按钮（手动编辑后写入映射表）
+        const saveCourseNameBtn = document.getElementById('save-course-name');
+        if (saveCourseNameBtn) {
+            saveCourseNameBtn.addEventListener('click', () => {
+                const input = document.getElementById('current-course-info');
+                const urlParams = new URLSearchParams(window.location.search);
+                const classId = urlParams.get('clazzid') || urlParams.get('classId') || '';
+                if (!classId) {
+                    insertLog('未检测到 classId，无法保存', 'warning');
+                    return;
+                }
+                const newName = input.value.trim();
+                if (!newName) {
+                    insertLog('课程名不能为空', 'warning');
+                    return;
+                }
+                const map = loadCourseMap();
+                map[String(classId)] = newName;
+                saveCourseMap(map);
+                insertLog(`课程名已保存: ${newName} (classId: ${classId})`, 'log');
+                updateCourseInfoDisplay(classId, newName);
+            });
+        }
+
         // 开始获取题目按钮
         const startBtn = document.getElementById('start-fetch');
         if (startBtn) {
@@ -853,15 +1067,92 @@
             });
         }
 
+        // 保存后端地址
+        const saveBackendUrlBtn = document.getElementById('save-backend-url');
+        if (saveBackendUrlBtn) {
+            saveBackendUrlBtn.addEventListener('click', () => {
+                const url = document.getElementById('backend-url').value.trim();
+                if (url) {
+                    GM_setValue('backendUrl', url);
+                    insertLog(`后端地址已设置为: ${url}`, 'log');
+                }
+            });
+        }
+
         // 加载保存的设置
         const autoAnswer = GM_getValue('autoAnswer', true);
         const autoChangeNext = GM_getValue('autoChangeNext', true);
+        const backendUrl = GM_getValue('backendUrl', 'http://localhost:65535');
         document.getElementById('auto-answer').checked = autoAnswer;
         document.getElementById('auto-change-next').checked = autoChangeNext;
+        document.getElementById('backend-url').value = backendUrl;
+
+    // 监听"课程"菜单点击 → 等 iframe 加载完成 → 自动抓取
+    function setupAutoScrape() {
+        const courseMenuItem = document.querySelector('[name="课程"]');
+        if (!courseMenuItem) {
+            // 不在 i.chaoxing.com/base，不启用
+            return;
+        }
+
+        // 等待 iframe 加载 → 轮询课程卡片出现 → 抓取
+        async function doScrape() {
+            const frameIframe = document.querySelector('#frame_content');
+            if (!frameIframe) return;
+
+            insertLog('[自动] 等待课程卡片渲染...', 'log');
+
+            // 轮询等待卡片出现，最多等 30 秒
+            for (let i = 0; i < 60; i++) {
+                await new Promise(r => setTimeout(r, 500));
+                let doc = null;
+                try { doc = frameIframe.contentDocument; } catch (e) {}
+                if (!doc) continue;
+                const cards = doc.querySelectorAll(
+                    '#stuNormalCourseListDiv .course.clearfix, ' +
+                    '#stuTopCourseListDiv .course.clearfix, ' +
+                    '#isState .course.clearfix'
+                );
+                if (cards.length > 0) {
+                    insertLog(`[自动] 检测到 ${cards.length} 个课程卡片`, 'log');
+                    break;
+                }
+            }
+
+            const count = scrapeCourseMap();
+            if (count > 0) {
+                insertLog(`[自动] 抓取完成: ${count} 门`, 'log');
+                const p = new URLSearchParams(window.location.search);
+                const id = p.get('clazzid') || p.get('classId') || '';
+                updateCourseInfoDisplay(id, getCourseNameByClassId(id) || id);
+            }
+        }
+
+        // 点击"课程"菜单 → 抓取
+        courseMenuItem.addEventListener('click', () => {
+            insertLog('[自动] 检测到"课程"菜单点击', 'log');
+            doScrape();
+        });
+
+        // 初始就在课程 tab → 自动抓取
+        if (courseMenuItem.classList.contains('active') || courseMenuItem.classList.contains('cur')) {
+            insertLog('[自动] 初始在课程 tab', 'log');
+            doScrape();
+        }
+    }
+
+        // 启动自动抓取
+        setupAutoScrape();
+
+        // 刷新当前课程显示
+        const urlParams = new URLSearchParams(window.location.search);
+        const classId = urlParams.get('clazzid') || urlParams.get('classId') || '';
+        const className = getCourseNameByClassId(classId);
+        updateCourseInfoDisplay(classId, className);
 
         // 添加拖动功能
         makeDraggable();
-        
+
         // 如果开启了自动获取，则自动开始
         if (autoAnswer) {
             setTimeout(async () => {
@@ -880,8 +1171,9 @@
             
             if (result && result.totalCount > 0) {
                 GM_setValue('lastParsedQuestions', JSON.stringify(result));
+                await saveToBackend(result);
             }
-            
+
             // 如果没有开启自动翻页，停止循环
             if (!autoChangeNext) {
                 insertLog('自动翻页已关闭，停止自动获取', 'log');

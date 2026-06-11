@@ -23,11 +23,11 @@ const fetchCourses = async () => {
 }
 
 const handleSearch = () => {
-  // 客户端按 classId 过滤
+  // 客户端按 className 过滤
   if (searchKeyword.value) {
     fetchCourses().then(() => {
       courses.value = courses.value.filter((c) =>
-        String(c.classId).includes(searchKeyword.value),
+        (c.className || '').includes(searchKeyword.value),
       )
     })
   } else {
@@ -87,11 +87,11 @@ onMounted(() => {
           @click="handleEnterCourse(course)"
         >
           <div class="course-cover" :class="`cover-color-${index % 6}`">
-            <span class="cover-text">班级 {{ course.classId }}</span>
+            <span class="cover-text">{{ course.className || '班级 ' + course.classId }}</span>
             <span class="cover-count">{{ course.questionTotal }} 题</span>
           </div>
           <div class="course-footer">
-            <span class="course-desc">classId: {{ course.classId }}</span>
+            <span class="course-desc">{{ course.className || 'classId: ' + course.classId }}</span>
           </div>
         </div>
       </div>

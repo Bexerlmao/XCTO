@@ -3,14 +3,14 @@
 <mapper namespace="cc.bexerlmao.xcto.chaoxingClass.mapper.ChaoxingClassMapper">
 
     <select id="getAllClasses" resultType="cc.bexerlmao.xcto.chaoxingClass.pojo.ChaoxingClassBo">
-        SELECT id, class_id AS classId, question_total AS questionTotal
+        SELECT id, class_id AS classId, class_name AS className, question_total AS questionTotal
         FROM chaoxingclass
         ORDER BY class_id
     </select>
 
-    <insert id="insertClass" parameterType="Long">
-        INSERT INTO chaoxingclass(class_id, question_total)
-        values (#{classId}, 0)
+    <insert id="insertClass" parameterType="map">
+        INSERT INTO chaoxingclass(class_id, class_name, question_total)
+        values (#{classId}, #{className}, 0)
     </insert>
 
     <select id="getClassQuestionTotalById" parameterType="Long" resultType="Long">

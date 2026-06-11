@@ -8,6 +8,7 @@ import java.util.List;
 public class QuestionBatchRequest {
 
     private long classId;
+    private String className;
     private List<Question> questions;
 
 }

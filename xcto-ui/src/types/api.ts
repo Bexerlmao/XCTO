@@ -17,6 +17,7 @@ export interface QuestionOption {
 export interface Course {
   id: number
   classId: number
+  className: string
   questionTotal: number
 }
 

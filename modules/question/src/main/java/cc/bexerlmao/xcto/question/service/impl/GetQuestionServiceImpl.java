@@ -90,7 +90,7 @@ public class GetQuestionServiceImpl implements GetQuestionService {
 
         Long currentTotal = chaoxingClassService.getQuestionTotalByClassId(classId);
         if (currentTotal == null) {
-            chaoxingClassService.insertClass(classId);
+            chaoxingClassService.insertClass(classId, request.getClassName());
         }
         chaoxingClassService.updateClassTotalByClassId(classId, (long) questions.size());
     }
@@ -125,7 +125,7 @@ public class GetQuestionServiceImpl implements GetQuestionService {
     private void incrementClassTotal(Long classId, Long delta) {
         Long currentTotal = chaoxingClassService.getQuestionTotalByClassId(classId);
         if (currentTotal == null) {
-            chaoxingClassService.insertClass(classId);
+            chaoxingClassService.insertClass(classId, null);
         }
         chaoxingClassService.updateClassTotalByClassId(classId, delta);
     }

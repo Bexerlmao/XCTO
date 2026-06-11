@@ -32,7 +32,7 @@ public class ChaoxingClassServiceImpl implements ChaoxingClassService {
     public void updateClassTotalByClassId(Long classId, Long deltaTotal) {
         Long questionTotal = getQuestionTotalByClassId(classId);
         if (questionTotal == null) {
-            insertClass(classId);
+            insertClass(classId, null);
             questionTotal = 0L;
         }
         Map<String, Long> params = new HashMap<>();
@@ -42,8 +42,8 @@ public class ChaoxingClassServiceImpl implements ChaoxingClassService {
     }
 
     @Override
-    public void insertClass(Long classId) {
-        chaoxingClassMapper.insertClass(classId);
+    public void insertClass(Long classId, String className) {
+        chaoxingClassMapper.insertClass(classId, className);
     }
 
     @Override

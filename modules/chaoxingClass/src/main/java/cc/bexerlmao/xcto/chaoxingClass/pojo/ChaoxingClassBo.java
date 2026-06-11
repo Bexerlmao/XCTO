@@ -11,6 +11,7 @@ public class ChaoxingClassBo {
     @TableId
     Long id;
     Long classId;
+    String className;
     Long questionTotal;
 
 }
