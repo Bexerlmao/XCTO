@@ -25,9 +25,7 @@ public interface GetQuestionService {
 
     List<Question> getAllQuestions();
 
-
     List<Question> getQuestionsByClassId(Long classId);
-
 
     void updateQuestion(Question question);
 

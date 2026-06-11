@@ -5,14 +5,17 @@ import cc.bexerlmao.xcto.question.pojo.Question;
 import cc.bexerlmao.xcto.question.pojo.QuestionBatchRequest;
 import cc.bexerlmao.xcto.question.mapper.QuestionMapper;
 import cc.bexerlmao.xcto.question.service.GetQuestionService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-
 @Service
 public class GetQuestionServiceImpl implements GetQuestionService {
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final QuestionMapper questionMapper;
     private final ChaoxingClassService chaoxingClassService;
@@ -97,7 +100,12 @@ public class GetQuestionServiceImpl implements GetQuestionService {
         if (question == null || question.getAnswer() == null) {
             return false;
         }
-        return question.getAnswer().equals(userAnswers);
+        try {
+            List<String> correctAnswers = objectMapper.readValue(question.getAnswer(), new TypeReference<List<String>>() {});
+            return correctAnswers.equals(userAnswers);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override
@@ -106,10 +114,8 @@ public class GetQuestionServiceImpl implements GetQuestionService {
         resultQuestion.setId(sourceQuestion.getId());
         resultQuestion.setQuestion(sourceQuestion.getQuestion());
         resultQuestion.setQuestionType(sourceQuestion.getQuestionType());
-        resultQuestion.setOptions(sourceQuestion.getOptions() != null
-                ? new HashMap<>(sourceQuestion.getOptions()) : null);
-        resultQuestion.setAnswer(sourceQuestion.getAnswer() != null
-                ? new ArrayList<>(sourceQuestion.getAnswer()) : null);
+        resultQuestion.setOptions(sourceQuestion.getOptions());
+        resultQuestion.setAnswer(sourceQuestion.getAnswer());
         resultQuestion.setClassId(sourceQuestion.getClassId());
         return resultQuestion;
     }
