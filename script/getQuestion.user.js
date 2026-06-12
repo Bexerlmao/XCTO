@@ -1266,15 +1266,51 @@
         });
     }
 
+    // 判断是否在课程内容页（有题目的页面，而非课程列表页）
+    function isCourseContentPage() {
+        const url = window.location.href;
+        const params = new URLSearchParams(window.location.search);
+        // 有 courseId/clazzid/chapterId 参数 → 课程内容页 → 显示面板
+        if (params.get('courseId') || params.get('clazzid') || params.get('classId') || params.get('chapterId') || params.get('knowledgeid')) {
+            return true;
+        }
+        // mooc2-ans 域名 → 课程内容页
+        if (url.includes('mooc2-ans.chaoxing.com')) return true;
+        // 其他情况（如 i.chaoxing.com/base）→ 课程列表页，不显示
+        return false;
+    }
+
     // 等待页面加载完成
     const timer = setInterval(() => {
         if (document.readyState === 'complete') {
             clearInterval(timer);
             const panel = createDebugPanel();
             document.body.appendChild(panel);
+
+            if (isCourseContentPage()) {
+                // 课程内容页 → 显示面板
+                panel.style.display = 'block';
+                insertLog('调试面板已加载（课程内容页，自动显示）', 'log');
+            } else {
+                // 课程列表页 → 隐藏面板，后台静默运行
+                panel.style.display = 'none';
+                insertLog('调试面板已加载（课程列表页，默认隐藏，按 Ctrl+Shift+X 切换显示）', 'log');
+            }
             bindEvents();
-            insertLog('调试面板已加载完成', 'log');
             insertLog(`当前页面: ${window.location.href}`, 'log');
+
+            // 快捷键 Ctrl+Shift+X 切换面板显示
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.shiftKey && e.key === 'X') {
+                    e.preventDefault();
+                    const p = document.querySelector('.main-wrap');
+                    if (p) {
+                        const hidden = p.style.display === 'none';
+                        p.style.display = hidden ? 'block' : 'none';
+                        insertLog(hidden ? '面板已显示' : '面板已隐藏', 'log');
+                    }
+                }
+            });
         }
     }, 100);
 })();
