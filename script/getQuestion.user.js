@@ -201,6 +201,7 @@
 
     // 日志存储
     const logList = [];
+    let loopRunning = false;
 
     // 添加日志函数
     function insertLog(text, type = 'log') {
@@ -1096,21 +1097,29 @@
             });
         }
 
-        // 自动获取 — 变更即自动保存
+        // 自动获取 — 变更即自动保存，开时自动启动
         const autoAnswerCheckbox = document.getElementById('auto-answer');
         if (autoAnswerCheckbox) {
             autoAnswerCheckbox.addEventListener('change', () => {
                 GM_setValue('autoAnswer', autoAnswerCheckbox.checked);
                 insertLog(`自动获取已${autoAnswerCheckbox.checked ? '开启' : '关闭'}`, 'log');
+                if (autoAnswerCheckbox.checked && !loopRunning) {
+                    insertLog('自动获取已开启，自动开始获取题目', 'log');
+                    runAutoLoop();
+                }
             });
         }
 
-        // 自动翻页 — 变更即自动保存
+        // 自动翻页 — 变更即自动保存，开时自动恢复
         const autoChangeNextCheckbox = document.getElementById('auto-change-next');
         if (autoChangeNextCheckbox) {
             autoChangeNextCheckbox.addEventListener('change', () => {
                 GM_setValue('autoChangeNext', autoChangeNextCheckbox.checked);
                 insertLog(`自动翻页已${autoChangeNextCheckbox.checked ? '开启' : '关闭'}`, 'log');
+                if (autoChangeNextCheckbox.checked && !loopRunning) {
+                    insertLog('自动翻页已开启，自动恢复获取题目', 'log');
+                    runAutoLoop();
+                }
             });
         }
 
@@ -1214,37 +1223,46 @@
 
     // 自动循环：获取题目 -> 翻页 -> 等待加载 -> 继续
     async function runAutoLoop() {
-        while (true) {
-            // 每轮从存储实时读取，同步 checkbox UI 状态
-            const autoChangeNext = GM_getValue('autoChangeNext', true);
-            const autoChangeNextEl = document.getElementById('auto-change-next');
-            if (autoChangeNextEl) autoChangeNextEl.checked = autoChangeNext;
+        if (loopRunning) {
+            insertLog('获取任务已在运行中，跳过', 'warning');
+            return;
+        }
+        loopRunning = true;
+        try {
+            while (true) {
+                // 每轮从存储实时读取，同步 checkbox UI 状态
+                const autoChangeNext = GM_getValue('autoChangeNext', true);
+                const autoChangeNextEl = document.getElementById('auto-change-next');
+                if (autoChangeNextEl) autoChangeNextEl.checked = autoChangeNext;
 
-            insertLog('开始获取题目...', 'log');
-            const result = await parseQuestions();
+                insertLog('开始获取题目...', 'log');
+                const result = await parseQuestions();
 
-            if (result && result.totalCount > 0) {
-                GM_setValue('lastParsedQuestions', JSON.stringify(result));
-                await saveToBackend(result);
+                if (result && result.totalCount > 0) {
+                    GM_setValue('lastParsedQuestions', JSON.stringify(result));
+                    await saveToBackend(result);
+                }
+
+                // 如果没有开启自动翻页，停止循环
+                if (!autoChangeNext) {
+                    insertLog('自动翻页已关闭，停止自动获取', 'log');
+                    break;
+                }
+
+                // 尝试翻页
+                const canContinue = await autoNextPage();
+
+                // 如果无法继续翻页，停止循环
+                if (!canContinue) {
+                    break;
+                }
+
+                // 等待新页面加载
+                insertLog('等待新页面加载...', 'log');
+                await new Promise(r => setTimeout(r, 3000));
             }
-
-            // 如果没有开启自动翻页，停止循环
-            if (!autoChangeNext) {
-                insertLog('自动翻页已关闭，停止自动获取', 'log');
-                break;
-            }
-
-            // 尝试翻页
-            const canContinue = await autoNextPage();
-
-            // 如果无法继续翻页，停止循环
-            if (!canContinue) {
-                break;
-            }
-
-            // 等待新页面加载
-            insertLog('等待新页面加载...', 'log');
-            await new Promise(r => setTimeout(r, 3000));
+        } finally {
+            loopRunning = false;
         }
     }
 
