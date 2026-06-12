@@ -150,6 +150,52 @@
             background: #fff;
             cursor: pointer;
         }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+            flex-shrink: 0;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .toggle-switch input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            cursor: pointer;
+            z-index: 1;
+        }
+        .toggle-switch .slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,.25);
+            transition: background-color .3s;
+            border-radius: 11px;
+        }
+        .toggle-switch .slider::before {
+            position: absolute;
+            content: "";
+            width: 18px;
+            height: 18px;
+            left: 2px;
+            top: 2px;
+            background-color: #fff;
+            transition: transform .3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,.25);
+        }
+        .toggle-switch input:checked + .slider {
+            background-color: #409eff;
+        }
+        .toggle-switch input:checked + .slider::before {
+            transform: translateX(22px);
+        }
     `;
     document.head.appendChild(style);
 
@@ -977,18 +1023,21 @@
                         <div class="section-title">配置信息</div>
                         <div class="config-row">
                             <span>后端地址:</span>
-                            <input type="text" id="backend-url" placeholder="http://localhost:65535">
-                            <button id="save-backend-url">保存</button>
+                            <input type="text" id="backend-url" placeholder="http://localhost:65535" style="width:160px">
                         </div>
                         <div class="config-row">
                             <span>自动获取:</span>
-                            <input type="checkbox" id="auto-answer" checked>
-                            <button id="save-auto-answer">保存</button>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="auto-answer" checked>
+                                <span class="slider"></span>
+                            </label>
                         </div>
                         <div class="config-row">
                             <span>自动翻页:</span>
-                            <input type="checkbox" id="auto-change-next" checked>
-                            <button id="save-auto-change-next">保存</button>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="auto-change-next" checked>
+                                <span class="slider"></span>
+                            </label>
                         </div>
                     </div>
                     <div class="config-section">
@@ -1047,35 +1096,37 @@
             });
         }
 
-        // 保存获取题目开关
-        const saveAutoAnswerBtn = document.getElementById('save-auto-answer');
-        if (saveAutoAnswerBtn) {
-            saveAutoAnswerBtn.addEventListener('click', () => {
-                const checked = document.getElementById('auto-answer').checked;
-                GM_setValue('autoAnswer', checked);
-                insertLog(`自动获取已${checked ? '开启' : '关闭'}`, 'log');
+        // 自动获取 — 变更即自动保存
+        const autoAnswerCheckbox = document.getElementById('auto-answer');
+        if (autoAnswerCheckbox) {
+            autoAnswerCheckbox.addEventListener('change', () => {
+                GM_setValue('autoAnswer', autoAnswerCheckbox.checked);
+                insertLog(`自动获取已${autoAnswerCheckbox.checked ? '开启' : '关闭'}`, 'log');
             });
         }
 
-        // 保存自动翻页开关
-        const saveAutoChangeNextBtn = document.getElementById('save-auto-change-next');
-        if (saveAutoChangeNextBtn) {
-            saveAutoChangeNextBtn.addEventListener('click', () => {
-                const checked = document.getElementById('auto-change-next').checked;
-                GM_setValue('autoChangeNext', checked);
-                insertLog(`自动翻页已${checked ? '开启' : '关闭'}`, 'log');
+        // 自动翻页 — 变更即自动保存
+        const autoChangeNextCheckbox = document.getElementById('auto-change-next');
+        if (autoChangeNextCheckbox) {
+            autoChangeNextCheckbox.addEventListener('change', () => {
+                GM_setValue('autoChangeNext', autoChangeNextCheckbox.checked);
+                insertLog(`自动翻页已${autoChangeNextCheckbox.checked ? '开启' : '关闭'}`, 'log');
             });
         }
 
-        // 保存后端地址
-        const saveBackendUrlBtn = document.getElementById('save-backend-url');
-        if (saveBackendUrlBtn) {
-            saveBackendUrlBtn.addEventListener('click', () => {
-                const url = document.getElementById('backend-url').value.trim();
+        // 后端地址 — 失焦或回车自动保存
+        const backendUrlInput = document.getElementById('backend-url');
+        if (backendUrlInput) {
+            function saveBackendUrl() {
+                const url = backendUrlInput.value.trim();
                 if (url) {
                     GM_setValue('backendUrl', url);
                     insertLog(`后端地址已设置为: ${url}`, 'log');
                 }
+            }
+            backendUrlInput.addEventListener('blur', saveBackendUrl);
+            backendUrlInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') saveBackendUrl();
             });
         }
 
@@ -1163,12 +1214,15 @@
 
     // 自动循环：获取题目 -> 翻页 -> 等待加载 -> 继续
     async function runAutoLoop() {
-        const autoChangeNext = GM_getValue('autoChangeNext', true);
-        
         while (true) {
+            // 每轮从存储实时读取，同步 checkbox UI 状态
+            const autoChangeNext = GM_getValue('autoChangeNext', true);
+            const autoChangeNextEl = document.getElementById('auto-change-next');
+            if (autoChangeNextEl) autoChangeNextEl.checked = autoChangeNext;
+
             insertLog('开始获取题目...', 'log');
             const result = await parseQuestions();
-            
+
             if (result && result.totalCount > 0) {
                 GM_setValue('lastParsedQuestions', JSON.stringify(result));
                 await saveToBackend(result);
@@ -1179,15 +1233,15 @@
                 insertLog('自动翻页已关闭，停止自动获取', 'log');
                 break;
             }
-            
+
             // 尝试翻页
             const canContinue = await autoNextPage();
-            
+
             // 如果无法继续翻页，停止循环
             if (!canContinue) {
                 break;
             }
-            
+
             // 等待新页面加载
             insertLog('等待新页面加载...', 'log');
             await new Promise(r => setTimeout(r, 3000));
