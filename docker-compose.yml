@@ -1,0 +1,41 @@
+# ============================================================
+# XCTO Docker Compose（自带 PostgreSQL，一键启动）
+# ============================================================
+
+services:
+  db:
+    image: postgres:16.3
+    container_name: xcto-db
+    environment:
+      POSTGRES_DB: xcto
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d xcto"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  xcto:
+    image: xcto:latest
+    container_name: xcto-app
+    ports:
+      - "8080:65535"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: xcto
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-123456}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:

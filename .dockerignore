@@ -1,0 +1,29 @@
+# Git
+.git/
+.gitattributes
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Claude
+.claude/
+CLAUDE.md
+
+# Maven build output（保留根目录 target/XCTO.jar 用于 Docker 构建）
+**/target/
+!target/XCTO.jar
+
+# Frontend (rebuilt in Docker)
+xcto-ui/node_modules/
+xcto-ui/dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docs
+README.md
+开发日志.md

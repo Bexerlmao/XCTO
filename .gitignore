@@ -81,6 +81,13 @@ xcto-ui/*.timestamp-*-*.mjs
 CLAUDE.md
 .claude/
 
+### Docker ###
+.env
+*.tar
+
+# 前端构建产物（Maven generate-resources 自动生成）
+application/src/main/resources/static/
+
 ### Script artifacts ###
 script/other.js
 

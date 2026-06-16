@@ -2,10 +2,10 @@ spring:
   application:
     name: Application
   datasource:
-    url: jdbc:postgresql://localhost:5432/xcto
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:xcto}
     driver-class-name: org.postgresql.Driver
-    username: postgres
-    password: 123456
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:123456}
 
 server:
   port: 65535
